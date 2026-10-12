@@ -8,9 +8,9 @@
 [![Platform](https://img.shields.io/badge/Windows-10%20%7C%2011%20(x64)-22d3ee.svg)](#kurulum)
 [![Lisans](https://img.shields.io/badge/Lisans-Apache%202.0-blue.svg)](LICENSE)
 
-### [⬇ Setup'ı indir — GoodbyeDPI-Turkey-GUI-Setup-1.0.1.msi](https://github.com/TrinsyCa/GoodbyeDPI-Turkey/releases/download/gui-v1.0.1/GoodbyeDPI-Turkey-GUI-Setup-1.0.1.msi)
+### [⬇ Setup'ı indir — GoodbyeDPI-Turkey-GUI-Setup-1.0.2.msi](https://github.com/TrinsyCa/GoodbyeDPI-Turkey/releases/download/gui-v1.0.2/GoodbyeDPI-Turkey-GUI-Setup-1.0.2.msi)
 
-<sub>Windows 10/11 x64 · 63 MB · .NET ve GoodbyeDPI dosyaları içinde · [Tüm sürümler](https://github.com/TrinsyCa/GoodbyeDPI-Turkey/releases)</sub>
+<sub>Windows 10/11 x64 · 64 MB · .NET ve GoodbyeDPI dosyaları içinde · [Tüm sürümler](https://github.com/TrinsyCa/GoodbyeDPI-Turkey/releases)</sub>
 
 </div>
 
@@ -62,7 +62,7 @@ Bu uygulama bunların hepsini tek bir arayüzde topluyor: **yöntemleri kurmadan
 
 ## Kurulum
 
-1. **[GoodbyeDPI-Turkey-GUI-Setup-1.0.1.msi](https://github.com/TrinsyCa/GoodbyeDPI-Turkey/releases/download/gui-v1.0.1/GoodbyeDPI-Turkey-GUI-Setup-1.0.1.msi)** dosyasını indirin (ya da **[Releases](https://github.com/TrinsyCa/GoodbyeDPI-Turkey/releases)** sayfasından en son sürümü seçin).
+1. **[GoodbyeDPI-Turkey-GUI-Setup-1.0.2.msi](https://github.com/TrinsyCa/GoodbyeDPI-Turkey/releases/download/gui-v1.0.2/GoodbyeDPI-Turkey-GUI-Setup-1.0.2.msi)** dosyasını indirin (ya da **[Releases](https://github.com/TrinsyCa/GoodbyeDPI-Turkey/releases)** sayfasından en son sürümü seçin).
 2. Setup'ı çalıştırın. Uygulama `C:\Program Files\GoodbyeDPI Turkey` klasörüne kurulur; Başlat menüsüne ve masaüstüne kısayol eklenir.
 3. Uygulama ilk açılışta bir kez yönetici izni ister, ardından yöntemleri test eden kurulum ekranı açılır.
 4. Test bitince **"Önerileni kur ve başla"** ile bitirin.
