@@ -1,0 +1,77 @@
+<UserControl x:Class="GoodbyeDPI.Gui.Controls.AuroraBackground"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             IsHitTestVisible="False" ClipToBounds="True">
+    <!-- Yavaşça süzülen renk lekeleri; ana pencere ve ilk kurulum ekranı ortak kullanır -->
+    <Grid>
+        <Canvas>
+            <Ellipse Width="760" Height="760" Canvas.Left="-260" Canvas.Top="-320">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#668B5CF6" Offset="0" />
+                        <GradientStop Color="#008B5CF6" Offset="1" />
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+                <Ellipse.RenderTransform>
+                    <TranslateTransform x:Name="AuroraA" />
+                </Ellipse.RenderTransform>
+            </Ellipse>
+            <Ellipse Width="680" Height="680" Canvas.Left="560" Canvas.Top="240">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#4D22D3EE" Offset="0" />
+                        <GradientStop Color="#0022D3EE" Offset="1" />
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+                <Ellipse.RenderTransform>
+                    <TranslateTransform x:Name="AuroraB" />
+                </Ellipse.RenderTransform>
+            </Ellipse>
+            <Ellipse Width="560" Height="560" Canvas.Left="220" Canvas.Top="400">
+                <Ellipse.Fill>
+                    <RadialGradientBrush>
+                        <GradientStop Color="#3DEC4899" Offset="0" />
+                        <GradientStop Color="#00EC4899" Offset="1" />
+                    </RadialGradientBrush>
+                </Ellipse.Fill>
+                <Ellipse.RenderTransform>
+                    <TranslateTransform x:Name="AuroraC" />
+                </Ellipse.RenderTransform>
+            </Ellipse>
+            <Canvas.Triggers>
+                <EventTrigger RoutedEvent="Loaded">
+                    <BeginStoryboard>
+                        <Storyboard RepeatBehavior="Forever" AutoReverse="True">
+                            <DoubleAnimation Storyboard.TargetName="AuroraA" Storyboard.TargetProperty="X" From="0" To="220" Duration="0:0:19">
+                                <DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut" /></DoubleAnimation.EasingFunction>
+                            </DoubleAnimation>
+                            <DoubleAnimation Storyboard.TargetName="AuroraA" Storyboard.TargetProperty="Y" From="0" To="160" Duration="0:0:23">
+                                <DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut" /></DoubleAnimation.EasingFunction>
+                            </DoubleAnimation>
+                            <DoubleAnimation Storyboard.TargetName="AuroraB" Storyboard.TargetProperty="X" From="0" To="-260" Duration="0:0:21">
+                                <DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut" /></DoubleAnimation.EasingFunction>
+                            </DoubleAnimation>
+                            <DoubleAnimation Storyboard.TargetName="AuroraB" Storyboard.TargetProperty="Y" From="0" To="-180" Duration="0:0:17">
+                                <DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut" /></DoubleAnimation.EasingFunction>
+                            </DoubleAnimation>
+                            <DoubleAnimation Storyboard.TargetName="AuroraC" Storyboard.TargetProperty="X" From="0" To="300" Duration="0:0:25">
+                                <DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut" /></DoubleAnimation.EasingFunction>
+                            </DoubleAnimation>
+                            <DoubleAnimation Storyboard.TargetName="AuroraC" Storyboard.TargetProperty="Y" From="0" To="-240" Duration="0:0:20">
+                                <DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut" /></DoubleAnimation.EasingFunction>
+                            </DoubleAnimation>
+                        </Storyboard>
+                    </BeginStoryboard>
+                </EventTrigger>
+            </Canvas.Triggers>
+        </Canvas>
+        <Rectangle>
+            <Rectangle.Fill>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#330B0C10" Offset="0" />
+                    <GradientStop Color="#B30B0C10" Offset="1" />
+                </LinearGradientBrush>
+            </Rectangle.Fill>
+        </Rectangle>
+    </Grid>
+</UserControl>

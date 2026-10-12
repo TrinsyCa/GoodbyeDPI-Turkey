@@ -10,6 +10,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using GoodbyeDPI.Gui.Controls;
 using GoodbyeDPI.Gui.Core;
 using GoodbyeDPI.Gui.ViewModels;
 using Microsoft.Win32;
@@ -34,6 +35,9 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private string? _visualKey;
     private bool? _vpnVisual;
     private DateTime? _stoppedByUsAt;
+    private readonly LiveMonitor _live;
+    private readonly List<(double Down, double Up)> _traffic = [];
+    private const int ChartPoints = 60; // Son 60 saniye
 
     /// <summary>Test ya da servis işlemi sürerken satır butonları kapalı.</summary>
     public bool CanAct => !_busy;
@@ -72,7 +76,13 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _timer.Tick += (_, _) => Refresh();
         _timer.Start();
 
-        StateChanged += (_, _) => OnWindowStateChanged();
+        _live = new LiveMonitor(() => _settings.TestUrls.FirstOrDefault(), () => _testCts is not null);
+        _live.Traffic += s => Dispatcher.BeginInvoke(() => OnTraffic(s));
+        _live.PublicIp += ip => Dispatcher.BeginInvoke(() => OnPublicIp(ip));
+        _live.Reachability += r => Dispatcher.BeginInvoke(() => OnReachability(r));
+        _live.ServiceProcess += p => Dispatcher.BeginInvoke(() => OnServiceProcess(p));
+        ChartHost.SizeChanged += (_, _) => DrawChartGrid();
+
         Loaded += (_, _) =>
         {
             Refresh();
@@ -124,56 +134,117 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         foreach (var (nav, file) in pages)
         {
             nav.IsChecked = true;
-            await Task.Delay(TimeSpan.FromSeconds(2.5)); // Giriş animasyonları otursun
+            // Giriş animasyonları otursun; ilk sayfada canlı grafik ve IP bilgisi de dolsun
+            await Task.Delay(TimeSpan.FromSeconds(nav == NavDashboard ? 12 : 2.5));
             SaveSnapshot(System.IO.Path.Combine(directory, file));
         }
     }
 
-    private void SaveSnapshot(string path)
+    private void SaveSnapshot(string path) => UiHelpers.SaveSnapshot(RootGrid, Background, path);
+
+    // ═════════════════════════ Canlı analiz ═════════════════════════
+
+    private void OnTraffic(TrafficSample s)
     {
-        const double scale = 1.5; // Yüksek DPI ekranlarda da net görünsün
-        var size = new Size(RootGrid.ActualWidth, RootGrid.ActualHeight);
-        var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(
-            (int)(size.Width * scale), (int)(size.Height * scale), 96 * scale, 96 * scale, PixelFormats.Pbgra32);
+        LiveDown.Text = UiHelpers.FormatBytes(s.DownPerSec, perSecond: true);
+        LiveUp.Text = UiHelpers.FormatBytes(s.UpPerSec, perSecond: true);
+        LiveTotals.Text = $"Bu oturumda  ↓ {UiHelpers.FormatBytes(s.TotalDown)}   ↑ {UiHelpers.FormatBytes(s.TotalUp)}";
 
-        // Pencere arka planı RootGrid'in parçası değil; önce onu çiz
-        var background = new DrawingVisual();
-        using (var dc = background.RenderOpen())
-            dc.DrawRectangle(Background, null, new Rect(size));
-        bitmap.Render(background);
-        bitmap.Render(RootGrid);
+        _traffic.Add((s.DownPerSec, s.UpPerSec));
+        if (_traffic.Count > ChartPoints + 2)
+            _traffic.RemoveAt(0);
+        DrawChart();
+    }
 
-        var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
-        encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
-        using var file = System.IO.File.Create(path);
-        encoder.Save(file);
+    /// <summary>
+    /// Grafik her saniye bir adım sola kayar: yeni nokta sağdaki görünmeyen alana çizilir ve
+    /// tuval bir saniyede bir adım kadar sola kaydırılır. Böylece grafik zıplamadan akar.
+    /// </summary>
+    private void DrawChart()
+    {
+        var width = ChartHost.ActualWidth;
+        var height = ChartHost.ActualHeight;
+        if (width <= 0 || height <= 0 || _traffic.Count < 2)
+            return;
+
+        var step = width / (ChartPoints - 1);
+        var max = Math.Max(_traffic.Max(t => Math.Max(t.Down, t.Up)) * 1.2, 16 * 1024); // En az 16 KB/s ölçek
+        ChartMax.Text = UiHelpers.FormatBytes(max, perSecond: true);
+
+        Geometry Line(Func<(double Down, double Up), double> pick, bool closed)
+        {
+            var geometry = new StreamGeometry();
+            using (var ctx = geometry.Open())
+            {
+                // En yeni nokta x = width + step (görünmeyen alan) olacak şekilde sağa yasla
+                var startX = width + step - (_traffic.Count - 1) * step;
+                Point P(int i) => new(startX + i * step, height - 4 - pick(_traffic[i]) / max * (height - 22));
+                ctx.BeginFigure(closed ? new Point(startX, height) : P(0), closed, closed);
+                if (closed)
+                    ctx.LineTo(P(0), true, true);
+                for (var i = 1; i < _traffic.Count; i++)
+                    ctx.LineTo(P(i), true, true);
+                if (closed)
+                    ctx.LineTo(new Point(startX + (_traffic.Count - 1) * step, height), true, true);
+            }
+            geometry.Freeze();
+            return geometry;
+        }
+
+        DownArea.Data = Line(t => t.Down, closed: true);
+        DownLine.Data = Line(t => t.Down, closed: false);
+        UpArea.Data = Line(t => t.Up, closed: true);
+        UpLine.Data = Line(t => t.Up, closed: false);
+        ChartShift.BeginAnimation(TranslateTransform.XProperty, new DoubleAnimation(0, -step, Ms(1000)));
+    }
+
+    private void DrawChartGrid()
+    {
+        ChartGrid.Children.Clear();
+        var (w, h) = (ChartHost.ActualWidth, ChartHost.ActualHeight);
+        for (var i = 1; i <= 3; i++)
+        {
+            var y = Math.Round(h * i / 4) + 0.5;
+            ChartGrid.Children.Add(new System.Windows.Shapes.Line
+            {
+                X1 = 0, X2 = w, Y1 = y, Y2 = y,
+                Stroke = new SolidColorBrush(Color.FromArgb(0x14, 0xFF, 0xFF, 0xFF)),
+                StrokeDashArray = [2, 4],
+            });
+        }
+    }
+
+    private void OnPublicIp(PublicIpInfo? ip)
+    {
+        LiveIp.Text = ip?.Ip ?? "Alınamadı";
+        LiveLocation.Text = string.IsNullOrEmpty(ip?.Location) ? "—" : ip.Location;
+        LiveProvider.Text = string.IsNullOrEmpty(ip?.Provider) ? "—" : ip.Provider;
+        LiveProvider.ToolTip = ip?.Provider;
+    }
+
+    private void OnReachability(SiteResult r)
+    {
+        LiveReachLabel.Text = new Uri(r.Url).Host.ToUpperInvariant();
+        LiveReach.Text = r.Ok ? $"Erişilebilir · {r.Milliseconds} ms" : "Engelli";
+        LiveReach.ToolTip = r.Ok ? null : r.Error;
+        LiveReachDot.Fill = (Brush)FindResource(r.Ok ? "Good" : "Bad");
+    }
+
+    private void OnServiceProcess(ProcessStats? p)
+    {
+        LiveUptime.Text = p is null ? "—" : UiHelpers.FormatDuration(p.Uptime);
+        LiveCpu.Text = p is null ? "—" : $"%{p.CpuPercent:0.0} · {UiHelpers.FormatBytes(p.MemoryBytes)}";
     }
 
     // ═════════════════════════ Pencere çerçevesi ═════════════════════════
 
-    [DllImport("dwmapi.dll")]
-    private static extern int DwmSetWindowAttribute(IntPtr hwnd, int attribute, ref int value, int size);
-
     protected override void OnSourceInitialized(EventArgs e)
     {
         base.OnSourceInitialized(e);
-        var hwnd = new WindowInteropHelper(this).Handle;
-        int dark = 1, round = 2;
-        DwmSetWindowAttribute(hwnd, 20, ref dark, sizeof(int));  // DWMWA_USE_IMMERSIVE_DARK_MODE
-        DwmSetWindowAttribute(hwnd, 33, ref round, sizeof(int)); // DWMWA_WINDOW_CORNER_PREFERENCE = yuvarlak (Win11)
-    }
-
-    private void OnWindowStateChanged()
-    {
-        // WindowChrome ile büyütülen pencere ekran kenarlarından taşar
-        RootGrid.Margin = WindowState == WindowState.Maximized ? new Thickness(7) : new Thickness(0);
-        MaxGlyph.Text = WindowState == WindowState.Maximized ? "" : "";
+        UiHelpers.ApplyDarkRoundedFrame(this);
     }
 
     private void Minimize_Click(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
-
-    private void Maximize_Click(object sender, RoutedEventArgs e) =>
-        WindowState = WindowState == WindowState.Maximized ? WindowState.Normal : WindowState.Maximized;
 
     private void Close_Click(object sender, RoutedEventArgs e) => Close();
 
@@ -313,8 +384,10 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         PowerButton.IsEnabled = canToggle;
         PowerButton.Cursor = canToggle ? Cursors.Hand : Cursors.Arrow;
 
-        StatMethod.Text = methodName;
-        StatVpn.Text = _vpn.IsVpnActive ? "Bağlı" : "Bağlı değil";
+        LiveMethod.Text = methodName;
+        LiveMethod.ToolTip = string.IsNullOrEmpty(args) ? null : args;
+        LiveDns.Text = string.IsNullOrEmpty(args) ? "—"
+            : args.Contains("--dns-addr", StringComparison.Ordinal) ? "Yandex 77.88.8.8" : "Windows DNS";
         VpnSideText.Text = _vpn.IsVpnActive ? _vpn.ActiveAdapter ?? "Bağlı" : "Bağlı değil";
         ApplyVpnVisual(_vpn.IsVpnActive);
 
@@ -480,6 +553,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private async Task OnVpnChangedAsync(bool vpnActive)
     {
         Refresh();
+        _live.RefreshPublicIpSoon(); // VPN açılıp kapanınca genel IP değişir
         if (!_settings.AutoPauseOnVpn || _readOnly)
             return;
 
@@ -706,15 +780,33 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         SetProgress(0, steps, "GoodbyeDPI olmadan erişim kontrol ediliyor…");
 
         var externalRestarts = 0;
-        // Servis test sırasında dışarıdan açılırsa (ör. eski VPN script'i) iki goodbyedpi aynı anda
-        // çalışır ve sonuçlar o yöntemi değil servisi ölçer. Her adımda kontrol edip yeniden durdur.
-        async Task EnsureServiceStoppedAsync()
+        var byPreset = rows.ToDictionary(r => r.Preset);
+
+        // Ortak test motorunun olaylarını bu sayfanın kartlarına yansıt
+        void OnEvent(TestEvent e)
         {
-            if (await Task.Run(DpiService.GetState, ct) is DpiServiceState.Running or DpiServiceState.Starting)
+            switch (e)
             {
-                externalRestarts++;
-                Log.Warn("Test sırasında GoodbyeDPI servisi dışarıdan başlatıldı, tekrar durduruluyor.");
-                await Task.Run(DpiService.Stop, ct);
+                case BaselineFinished b:
+                    ShowBaseline(b.Blocked, b.Result.Sites.Count);
+                    break;
+                case PresetStarted p:
+                    SetProgress(p.Index + 1, steps, $"{p.Preset.Name} deneniyor…");
+                    byPreset[p.Preset].BeginTest();
+                    break;
+                case SiteFinished s:
+                    byPreset[s.Preset].AddLiveSite(s.Site);
+                    break;
+                case PresetFinished f:
+                    var row = byPreset[f.Preset];
+                    row.IsTesting = false;
+                    row.Result = f.Result;
+                    Log.Info($"Test: {row.Name} -> {row.StatusText}");
+                    _settings.LastResults[row.Preset.Arguments] = f.Result;
+                    break;
+                case ExternalRestartDetected:
+                    externalRestarts++;
+                    break;
             }
         }
 
@@ -723,31 +815,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             if (wasRunning)
                 await Task.Run(DpiService.Stop, ct);
 
-            var baseline = await TestRunner.RunBaselineAsync(urls, ct);
-            await EnsureServiceStoppedAsync();
-            var blocked = baseline.Sites.Count(s => !s.Ok);
-            ShowBaseline(blocked, baseline.Sites.Count);
-            Log.Info($"Engelsiz kontrol: {blocked}/{baseline.Sites.Count} site engelli.");
-
-            for (var i = 0; i < rows.Count; i++)
-            {
-                ct.ThrowIfCancellationRequested();
-                var row = rows[i];
-                SetProgress(i + 1, steps, $"{row.Name} deneniyor…");
-                await EnsureServiceStoppedAsync();
-                row.IsTesting = true;
-                try
-                {
-                    row.Result = await TestRunner.RunPresetAsync(folder, row.Preset, urls, ct);
-                }
-                finally
-                {
-                    row.IsTesting = false;
-                }
-                Log.Info($"Test: {row.Name} -> {row.StatusText}");
-                _settings.LastResults[row.Preset.Arguments] = row.Result;
-            }
-            await EnsureServiceStoppedAsync();
+            await TestOrchestrator.RunAsync(folder, rows.Select(r => r.Preset).ToList(), urls, OnEvent, ct);
             _settings.LastResultUrls = [.. urls];
             SetProgress(steps, steps, "Test tamamlandı");
         }
@@ -773,6 +841,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 _settings.Save();
             }
 
+            foreach (var row in rows.Where(r => r.IsTesting))
+                row.IsTesting = false; // İptal edildiyse yarım kalan kart
             _settings.Save();
             _testCts.Dispose();
             _testCts = null;
@@ -837,7 +907,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         TestProgressText.Text = text;
         TestProgressCount.Text = $"{done}/{total}";
-        Animate(ProgressScale, ScaleTransform.ScaleXProperty, total == 0 ? 0 : (double)done / total, 500, Ease());
+        TestProgressCard.UpdateLayout(); // Kart yeni göründüyse genişliği henüz hesaplanmamış olabilir
+        Animate(ProgressFill, WidthProperty, total == 0 ? 0 : ProgressTrack.ActualWidth * done / total, 500, Ease());
     }
 
     private void UpdateRecommendation(bool notify = true)
@@ -848,7 +919,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         var tested = _rows.Count(r => r.Result is not null);
         if (tested > 0)
-            StatTest.Text = $"{_rows.Count(r => r.Kind == CompatKind.Full)}/{tested} tam uyumlu";
+            StatTest.Text = $"Son test: {_rows.Count(r => r.Kind == CompatKind.Full)}/{tested} yöntem tam uyumlu";
         if (recommended is not null && notify)
             Notify($"Test bitti. Bu cihaz için önerilen yöntem: {recommended.Name}", ToastKind.Good);
     }
@@ -912,7 +983,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             row.Result = null; // Eski sonuçlar başka sitelerle alındı
         foreach (var row in _rows)
             row.IsRecommended = false;
-        StatTest.Text = "Henüz test yok";
+        StatTest.Text = "";
         Log.Info($"{lines.Length} test sitesi kaydedildi.");
         Notify($"{lines.Length} test sitesi kaydedildi.", ToastKind.Good);
     }
@@ -1020,6 +1091,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _timer.Stop();
         _toastTimer.Stop();
         _vpn.Dispose();
+        _live.Dispose();
         _testCts?.Cancel();
         TestRunner.KillOwnedProcesses(); // Test sırasında kapatılırsa goodbyedpi alt işlemi geride kalmasın
         base.OnClosed(e);
