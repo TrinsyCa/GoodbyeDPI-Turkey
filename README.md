@@ -45,6 +45,7 @@ Bu uygulama bunların hepsini tek bir arayüzde topluyor: **yöntemleri kurmadan
 | 🧰 **Çakışma tespiti** | Servisi dışarıdan açıp kapatan script ya da elle başlatılmış `goodbyedpi.exe` bulunursa uyarır ve tek tıkla kaldırır. |
 | 🧹 **Kayıt temizliği** | Servis, VPN ve test olaylarının kaydı tutulur. 7 günden eski kayıtlar otomatik silinir; istenirse tek tıkla hepsi temizlenir. |
 | 🖥️ **Tepside çalışma** | Windows açılınca tepside başlar. Pencere kapatılınca VPN takibi arka planda sürer. |
+| 🔔 **İsteğe bağlı bildirimler** | Tepsideyken VPN algılama, GoodbyeDPI'ın açılıp kapanması gibi olaylar için Windows bildirimi gönderilebilir. Varsayılan olarak **kapalıdır**, Ayarlar'dan açılır. |
 
 ## Ekran görüntüleri
 
@@ -54,7 +55,7 @@ Bu uygulama bunların hepsini tek bir arayüzde topluyor: **yöntemleri kurmadan
     <td width="50%"><b>Yöntemler</b><br>Her yöntemin bu ağdaki sonucu, site bazında.<br><br><img src="docs/gui/02-yontemler.png" alt="Yöntemler"></td>
   </tr>
   <tr>
-    <td width="50%"><b>Ayarlar</b><br>VPN algılama, Windows ile başlatma, test siteleri.<br><br><img src="docs/gui/03-ayarlar.png" alt="Ayarlar"></td>
+    <td width="50%"><b>Ayarlar</b><br>VPN algılama, Windows ile başlatma, bildirimler, test siteleri.<br><br><img src="docs/gui/03-ayarlar.png" alt="Ayarlar"></td>
     <td width="50%"><b>Kayıtlar</b><br>Servis, VPN ve test olayları; otomatik ve elle temizleme.<br><br><img src="docs/gui/04-kayitlar.png" alt="Kayıtlar"></td>
   </tr>
 </table>
