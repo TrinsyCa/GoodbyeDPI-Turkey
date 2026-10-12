@@ -13,6 +13,8 @@ public partial class App : Application
 
     public bool IsExiting { get; private set; }
 
+    private AppSettings? _settings;
+
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
@@ -154,6 +156,7 @@ public partial class App : Application
 
     private void CreateTray(MainWindow window)
     {
+        _settings = window.Settings;
         _trayToggle = new Forms.ToolStripMenuItem("GoodbyeDPI'ı aç/kapat", null, (_, _) => window.ToggleFromTray());
         var menu = new Forms.ContextMenuStrip();
         menu.Items.Add("Göster", null, (_, _) => ShowMainWindow());
@@ -182,8 +185,11 @@ public partial class App : Application
         _trayToggle.Enabled = toggleEnabled;
     }
 
+    /// <summary>Windows bildirimi; Ayarlar'dan açılmadıkça (varsayılan) gönderilmez.</summary>
     public void ShowBalloon(string message)
     {
+        if (_settings?.ShowNotifications != true)
+            return;
         _tray?.ShowBalloonTip(4000, "GoodbyeDPI Turkey", message, Forms.ToolTipIcon.Info);
     }
 

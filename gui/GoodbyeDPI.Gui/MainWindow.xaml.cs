@@ -45,6 +45,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     public bool IsClosed { get; private set; }
 
+    public AppSettings Settings => _settings;
+
     private static App CurrentApp => (App)Application.Current;
 
     /// <summary>Ekran görüntüsü modu: servise ve ayarlara hiçbir şey yazılmaz.</summary>
@@ -71,6 +73,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         AutoPauseCheck.IsChecked = settings.AutoPauseOnVpn;
         AutostartCheck.IsChecked = settings.StartWithWindows;
         TrayCheck.IsChecked = settings.MinimizeToTray;
+        NotifyCheck.IsChecked = settings.ShowNotifications;
         UrlsBox.Text = string.Join(Environment.NewLine, settings.TestUrls);
         Log.LineAdded += line => Dispatcher.BeginInvoke(() => AppendLog(line));
 
@@ -944,6 +947,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _settings.AutoPauseOnVpn = AutoPauseCheck.IsChecked == true;
         _settings.StartWithWindows = AutostartCheck.IsChecked == true;
         _settings.MinimizeToTray = TrayCheck.IsChecked == true;
+        _settings.ShowNotifications = NotifyCheck.IsChecked == true;
         if (!_settings.AutoPauseOnVpn)
             _settings.PausedByVpn = false; // Otomatik açma kapatıldıysa "duraklatıldı" durumunda takılı kalmasın
         _settings.Save();

@@ -42,6 +42,12 @@ public sealed class AppSettings
         "https://www.wattpad.com/",
     ];
 
+    /// <summary>
+    /// Pencere kapalıyken/tepsideyken olaylar (VPN algılama, servis aç/kapa, test bitti) için
+    /// Windows bildirimi gönderilsin mi? Varsayılan kapalı; pencere içi bildirimler bundan etkilenmez.
+    /// </summary>
+    public bool ShowNotifications { get; set; }
+
     /// <summary>Bu kadar günden eski log satırları otomatik silinir.</summary>
     public int LogRetentionDays { get; set; } = 7;
 
