@@ -18,6 +18,22 @@ public partial class App : Application
         base.OnStartup(e);
         var startInTray = e.Args.Contains("--tray", StringComparer.OrdinalIgnoreCase);
 
+        // Setup kaldırırken SYSTEM olarak çağırır; arayüz yok
+        if (e.Args.Contains("--cleanup", StringComparer.OrdinalIgnoreCase))
+        {
+            Cleanup.Run();
+            Shutdown();
+            return;
+        }
+
+        // README ekran görüntüleri: yetki gerektirmez, hiçbir şeyi değiştirmez
+        var shotIndex = Array.FindIndex(e.Args, a => a.Equals("--screenshots", StringComparison.OrdinalIgnoreCase));
+        if (shotIndex >= 0 && shotIndex + 1 < e.Args.Length)
+        {
+            StartScreenshotMode(e.Args[shotIndex + 1]);
+            return;
+        }
+
         if (!Elevation.IsElevated)
         {
             HandleUnelevatedStart(e.Args);
@@ -64,6 +80,34 @@ public partial class App : Application
         CreateTray(window);
         if (!startInTray)
             window.Show();
+    }
+
+    private void StartScreenshotMode(string directory)
+    {
+        var window = new MainWindow(AppSettings.Load(), readOnly: true)
+        {
+            ShowInTaskbar = false,
+            WindowStartupLocation = WindowStartupLocation.Manual,
+            Left = -20000, // Ekran dışında: kullanıcı pencerenin açılıp kapandığını görmesin
+            Top = 0,
+        };
+        MainWindow = window;
+        window.Show();
+        window.Dispatcher.BeginInvoke(async () =>
+        {
+            try
+            {
+                await window.CaptureScreenshotsAsync(directory);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Ekran görüntüsü alınamadı: {ex}");
+            }
+            finally
+            {
+                ExitApplication();
+            }
+        }, System.Windows.Threading.DispatcherPriority.ApplicationIdle);
     }
 
     private static void HandleUnelevatedStart(string[] args)

@@ -42,11 +42,17 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
     private static App CurrentApp => (App)Application.Current;
 
-    public MainWindow(AppSettings settings)
+    /// <summary>Ekran görüntüsü modu: servise ve ayarlara hiçbir şey yazılmaz.</summary>
+    private readonly bool _readOnly;
+
+    public MainWindow(AppSettings settings, bool readOnly = false)
     {
         InitializeComponent();
         DataContext = this;
         _settings = settings;
+        _readOnly = readOnly;
+        VersionText.Text = $"v{typeof(MainWindow).Assembly.GetName().Version?.ToString(3)}";
+        LoadLogTail();
 
         AutoPauseCheck.IsChecked = settings.AutoPauseOnVpn;
         AutostartCheck.IsChecked = settings.StartWithWindows;
@@ -80,9 +86,67 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         Dispatcher.BeginInvoke(async () =>
         {
             await Task.Delay(TimeSpan.FromSeconds(3));
-            if (_settings.PausedByVpn && !_vpn.IsVpnActive)
+            if (!_readOnly && _settings.PausedByVpn && !_vpn.IsVpnActive)
                 await ResumeAfterVpnAsync();
         });
+    }
+
+    /// <summary>Kayıtlar sayfası önceki oturumların olaylarını da göstersin.</summary>
+    private void LoadLogTail()
+    {
+        try
+        {
+            using var stream = new System.IO.FileStream(Log.FilePath, System.IO.FileMode.Open, System.IO.FileAccess.Read, System.IO.FileShare.ReadWrite);
+            using var reader = new System.IO.StreamReader(stream);
+            var lines = reader.ReadToEnd().Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries).TakeLast(150);
+            LogBox.Text = string.Join(Environment.NewLine, lines) + Environment.NewLine;
+        }
+        catch (System.IO.IOException)
+        {
+            // İlk açılış: log dosyası henüz yok
+        }
+        catch (UnauthorizedAccessException)
+        {
+        }
+    }
+
+    /// <summary>README için her sayfanın görüntüsünü alır ("--screenshots <klasör>").</summary>
+    public async Task CaptureScreenshotsAsync(string directory)
+    {
+        System.IO.Directory.CreateDirectory(directory);
+        var pages = new (RadioButton Nav, string File)[]
+        {
+            (NavDashboard, "01-kontrol-paneli.png"),
+            (NavMethods, "02-yontemler.png"),
+            (NavSettings, "03-ayarlar.png"),
+            (NavLogs, "04-kayitlar.png"),
+        };
+        foreach (var (nav, file) in pages)
+        {
+            nav.IsChecked = true;
+            await Task.Delay(TimeSpan.FromSeconds(2.5)); // Giriş animasyonları otursun
+            SaveSnapshot(System.IO.Path.Combine(directory, file));
+        }
+    }
+
+    private void SaveSnapshot(string path)
+    {
+        const double scale = 1.5; // Yüksek DPI ekranlarda da net görünsün
+        var size = new Size(RootGrid.ActualWidth, RootGrid.ActualHeight);
+        var bitmap = new System.Windows.Media.Imaging.RenderTargetBitmap(
+            (int)(size.Width * scale), (int)(size.Height * scale), 96 * scale, 96 * scale, PixelFormats.Pbgra32);
+
+        // Pencere arka planı RootGrid'in parçası değil; önce onu çiz
+        var background = new DrawingVisual();
+        using (var dc = background.RenderOpen())
+            dc.DrawRectangle(Background, null, new Rect(size));
+        bitmap.Render(background);
+        bitmap.Render(RootGrid);
+
+        var encoder = new System.Windows.Media.Imaging.PngBitmapEncoder();
+        encoder.Frames.Add(System.Windows.Media.Imaging.BitmapFrame.Create(bitmap));
+        using var file = System.IO.File.Create(path);
+        encoder.Save(file);
     }
 
     // ═════════════════════════ Pencere çerçevesi ═════════════════════════
@@ -416,7 +480,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private async Task OnVpnChangedAsync(bool vpnActive)
     {
         Refresh();
-        if (!_settings.AutoPauseOnVpn)
+        if (!_settings.AutoPauseOnVpn || _readOnly)
             return;
 
         if (vpnActive && _testCts is not null)

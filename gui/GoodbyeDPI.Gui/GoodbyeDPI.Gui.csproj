@@ -12,7 +12,7 @@
     <AssemblyName>GoodbyeDPI-Turkey-GUI</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>..\..\src\icon.ico</ApplicationIcon>
-    <Version>0.1.0</Version>
+    <Version>1.0.0</Version>
     <Product>GoodbyeDPI Turkey GUI</Product>
     <!-- DPI ayarı manifest'te kalmalı: WPF penceresi için PerMonitorV2 orada tanımlı -->
     <NoWarn>$(NoWarn);WFAC010</NoWarn>

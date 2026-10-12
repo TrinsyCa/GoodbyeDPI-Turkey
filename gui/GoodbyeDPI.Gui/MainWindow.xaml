@@ -109,6 +109,9 @@
                     </Border>
                     <TextBlock Text="GoodbyeDPI" FontWeight="Bold" FontSize="14" Margin="10,0,0,0" VerticalAlignment="Center" />
                     <TextBlock Text="Turkey" FontSize="14" Margin="5,0,0,0" VerticalAlignment="Center" Foreground="{StaticResource Muted}" />
+                    <Border CornerRadius="999" Padding="8,2" Margin="10,0,0,0" Background="#14FFFFFF" VerticalAlignment="Center">
+                        <TextBlock x:Name="VersionText" FontSize="10.5" Foreground="{StaticResource Muted}" />
+                    </Border>
                 </StackPanel>
             </DockPanel>
 
@@ -534,7 +537,7 @@
 
                                                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,16,18,16">
                                                     <!-- Uyumluluk rozeti -->
-                                                    <Border x:Name="Badge" CornerRadius="999" Padding="12,5" Background="#14FFFFFF" RenderTransformOrigin="0.5,0.5" Margin="0,0,12,0" ToolTip="{Binding DetailText}">
+                                                    <Border x:Name="Badge" CornerRadius="999" Padding="12,5" Background="#14FFFFFF" RenderTransformOrigin="0.5,0.5" Margin="0,0,12,0" VerticalAlignment="Center" ToolTip="{Binding DetailText}">
                                                         <Border.RenderTransform>
                                                             <ScaleTransform />
                                                         </Border.RenderTransform>
