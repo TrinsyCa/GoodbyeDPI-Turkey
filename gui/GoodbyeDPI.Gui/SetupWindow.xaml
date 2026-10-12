@@ -38,15 +38,19 @@
                             <RotateTransform x:Name="LogoSpin" />
                         </Ellipse.RenderTransform>
                     </Ellipse>
-                    <Border x:Name="LogoCore" Width="54" Height="54" CornerRadius="17" Background="{StaticResource AccentGradient}" RenderTransformOrigin="0.5,0.5">
+                    <Border x:Name="LogoCore" Width="54" Height="54" CornerRadius="17" Background="#1B1E28" BorderBrush="#33FFFFFF" BorderThickness="1" RenderTransformOrigin="0.5,0.5">
                         <Border.RenderTransform>
                             <ScaleTransform x:Name="LogoBreath" />
                         </Border.RenderTransform>
                         <Border.Effect>
                             <DropShadowEffect x:Name="LogoGlow" Color="{StaticResource AccentColor}" BlurRadius="34" ShadowDepth="0" Opacity="0.6" />
                         </Border.Effect>
-                        <TextBlock x:Name="LogoGlyph" Text="&#xEA18;" FontFamily="{StaticResource IconFont}" FontSize="24" Foreground="White"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        <Grid>
+                            <!-- GoodbyeDPI'ın orijinal logosu; kurulum bitince yerini sonuç simgesine bırakır -->
+                            <Image x:Name="LogoImage" Source="Assets/icon.ico" Width="34" Height="34" RenderOptions.BitmapScalingMode="HighQuality" />
+                            <TextBlock x:Name="LogoGlyph" FontFamily="{StaticResource IconFont}" FontSize="24" Foreground="White"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </Grid>
                     </Border>
                     <Grid.Triggers>
                         <EventTrigger RoutedEvent="Loaded">

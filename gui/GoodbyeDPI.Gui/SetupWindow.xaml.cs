@@ -249,7 +249,9 @@ public partial class SetupWindow : Window
         UiHelpers.Animate(HeaderTitleY, TranslateTransform.YProperty, 0, 420, from: 10);
         StepText.Text = success ? "Ayarlarınız kaydedildi. Bu ekran bir daha gösterilmeyecek." : detail;
         UiHelpers.Animate(LogoRing, OpacityProperty, 0, 500);
+        LogoImage.Visibility = Visibility.Collapsed;
         LogoGlyph.Text = success ? "" : "";
+        LogoGlyph.Foreground = (Brush)FindResource(success ? "Good" : "Warn");
         LogoGlow.BeginAnimation(System.Windows.Media.Effects.DropShadowEffect.ColorProperty,
             new ColorAnimation((Color)FindResource(success ? "GoodColor" : "WarnColor"), new Duration(TimeSpan.FromMilliseconds(600))));
         LogLine.Text = success ? "Ayarlar ve test sonuçları kaydedildi." : "";
@@ -336,6 +338,8 @@ public partial class SetupWindow : Window
         HeaderTitle.Text = "Cihazınız hazırlanıyor";
         LogoRing.BeginAnimation(OpacityProperty, null);
         LogoRing.Opacity = 1;
+        LogoImage.Visibility = Visibility.Visible;
+        LogoGlyph.Text = "";
         RetryButton.Visibility = Visibility.Collapsed;
         SkipButton.Visibility = Visibility.Visible;
         SetStep("Bu ağda hangi yöntemin çalıştığı bulunuyor…");

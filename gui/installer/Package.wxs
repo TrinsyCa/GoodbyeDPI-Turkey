@@ -11,7 +11,8 @@
            Codepage="1254"
            Compressed="yes">
 
-    <MajorUpgrade DowngradeErrorMessage="GoodbyeDPI Turkey'in daha yeni bir sürümü zaten kurulu." />
+    <!-- AllowSameVersionUpgrades: aynı sürüm numarasıyla yeniden yayınlanan bir derleme de eskisinin üzerine kurulsun -->
+    <MajorUpgrade DowngradeErrorMessage="GoodbyeDPI Turkey'in daha yeni bir sürümü zaten kurulu." AllowSameVersionUpgrades="yes" />
     <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
 
     <Icon Id="AppIcon" SourceFile="..\..\src\icon.ico" />
@@ -71,6 +72,9 @@
     <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1" />
 
     <WixVariable Id="WixUILicenseRtf" Value="License.rtf" />
+    <!-- GoodbyeDPI'ın orijinal logosuyla sihirbaz görselleri (make-bitmaps.ps1 üretir) -->
+    <WixVariable Id="WixUIBannerBmp" Value="Banner.bmp" />
+    <WixVariable Id="WixUIDialogBmp" Value="Dialog.bmp" />
     <UI>
       <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
       <Publish Dialog="ExitDialog" Control="Finish" Property="WixShellExecTarget" Value="[INSTALLFOLDER]GoodbyeDPI-Turkey-GUI.exe"
