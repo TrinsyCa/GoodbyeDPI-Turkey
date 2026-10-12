@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <!-- Sadece tepsi simgesi (NotifyIcon) için -->
+    <UseWindowsForms>true</UseWindowsForms>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>GoodbyeDPI.Gui</RootNamespace>
+    <AssemblyName>GoodbyeDPI-Turkey-GUI</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\..\src\icon.ico</ApplicationIcon>
+    <Version>0.1.0</Version>
+    <Product>GoodbyeDPI Turkey GUI</Product>
+    <!-- DPI ayarı manifest'te kalmalı: WPF penceresi için PerMonitorV2 orada tanımlı -->
+    <NoWarn>$(NoWarn);WFAC010</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- WPF ve WinForms aynı isimli tipler içeriyor (Application, MessageBox, Color...) -->
+    <Using Remove="System.Windows.Forms" />
+    <Using Remove="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="..\..\src\icon.ico" Link="Assets\icon.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.ServiceProcess.ServiceController" Version="8.0.1" />
+  </ItemGroup>
+
+</Project>

@@ -1,6 +1,11 @@
 *.o
 *.exe
 
+# Windows GUI build outputs
+gui/**/bin/
+gui/**/obj/
+gui/publish/
+
 # macOS build outputs
 macos/bin/
 macos/third_party/byedpi/
