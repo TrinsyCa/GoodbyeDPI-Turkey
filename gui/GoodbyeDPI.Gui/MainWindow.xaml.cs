@@ -227,7 +227,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             default:
                 title = "Kurulu değil";
                 detail = recommended is not null
-                    ? $"Test sonucuna göre bu cihaz için en iyisi: {recommended.Name}"
+                    ? $"Bu cihaz için en iyisi: {recommended.Name}. Kurmak için düğmeye dokunun."
                     : "Yöntemler sayfasından testi çalıştırın; cihazınızda çalışanı tek dokunuşla kurun.";
                 hint = recommended is not null ? "Önerileni kurmak için dokunun" : "Önce yöntemleri test edin";
                 trayToggle = recommended is not null ? "Önerileni kur" : "Kurulu değil";
@@ -245,7 +245,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         ApplyStatusVisual(title, color, pulse, spin);
         StatusDetail.Text = detail;
-        PowerHint.Text = hint;
+        PowerButton.ToolTip = hint; // Sürekli görünen ipucu yerine yalnızca üzerine gelince
         PowerButton.IsEnabled = canToggle;
         PowerButton.Cursor = canToggle ? Cursors.Hand : Cursors.Arrow;
 

@@ -295,6 +295,7 @@
 
                                         <!-- Tıklanabilir alan (görsel katmanlar arkada) -->
                                         <Button x:Name="PowerButton" Width="164" Height="164" Cursor="Hand" Click="Toggle_Click"
+                                                ToolTipService.ShowOnDisabled="True" ToolTipService.InitialShowDelay="600"
                                                 MouseEnter="PowerButton_MouseEnter" MouseLeave="PowerButton_MouseLeave"
                                                 PreviewMouseLeftButtonDown="PowerButton_Down" PreviewMouseLeftButtonUp="PowerButton_Up"
                                                 FocusVisualStyle="{x:Null}">
@@ -346,9 +347,6 @@
                                         </TextBlock.RenderTransform>
                                     </TextBlock>
                                     <TextBlock x:Name="StatusDetail" Style="{StaticResource MutedText}" FontSize="13.5" HorizontalAlignment="Center" TextAlignment="Center" Margin="0,6,0,0" MaxWidth="480" />
-                                    <Border HorizontalAlignment="Center" Margin="0,16,0,0" CornerRadius="999" Padding="14,6" Background="#10FFFFFF" BorderBrush="{StaticResource Stroke}" BorderThickness="1">
-                                        <TextBlock x:Name="PowerHint" FontSize="12" Foreground="{StaticResource Muted}" />
-                                    </Border>
                                 </StackPanel>
                             </Border>
 
