@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs"
+     xmlns:ui="http://wixtoolset.org/schemas/v4/wxs/ui">
+
+  <Package Name="GoodbyeDPI Turkey"
+           Manufacturer="TrinsyCa"
+           Version="$(var.Version)"
+           UpgradeCode="C196B2B7-EFB6-40F6-A44D-3DACBEC5354E"
+           Scope="perMachine"
+           Language="1055"
+           Codepage="1254"
+           Compressed="yes">
+
+    <MajorUpgrade DowngradeErrorMessage="GoodbyeDPI Turkey'in daha yeni bir sürümü zaten kurulu." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <Icon Id="AppIcon" SourceFile="..\..\src\icon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon" />
+    <Property Id="ARPURLINFOABOUT" Value="https://github.com/TrinsyCa/GoodbyeDPI-Turkey" />
+    <Property Id="ARPHELPLINK" Value="https://github.com/TrinsyCa/GoodbyeDPI-Turkey/issues" />
+
+    <!--
+      Program Files: uygulama UAC sormadan yönetici olarak başladığı için exe'nin
+      yalnızca yöneticinin yazabildiği bir yerde durması gerekir.
+    -->
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="GoodbyeDPI Turkey" />
+    </StandardDirectory>
+
+    <Feature Id="Main" Title="GoodbyeDPI Turkey">
+      <ComponentGroupRef Id="AppFiles" />
+      <ComponentRef Id="StartMenuShortcut" />
+      <ComponentRef Id="DesktopShortcut" />
+    </Feature>
+
+    <!-- Arayüz exe'si + goodbyedpi ikilileri (x86, x86_64), .cmd yöntemleri ve lisanslar -->
+    <ComponentGroup Id="AppFiles" Directory="INSTALLFOLDER">
+      <Files Include="$(var.StageDir)\**" />
+    </ComponentGroup>
+
+    <StandardDirectory Id="ProgramMenuFolder">
+      <Component Id="StartMenuShortcut">
+        <Shortcut Id="StartMenuShortcutLink" Name="GoodbyeDPI Turkey" Description="GoodbyeDPI Turkey kontrol paneli"
+                  Target="[INSTALLFOLDER]GoodbyeDPI-Turkey-GUI.exe" WorkingDirectory="INSTALLFOLDER" />
+        <RegistryValue Root="HKCU" Key="Software\TrinsyCa\GoodbyeDPI Turkey" Name="StartMenuShortcut" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+
+    <StandardDirectory Id="DesktopFolder">
+      <Component Id="DesktopShortcut">
+        <Shortcut Id="DesktopShortcutLink" Name="GoodbyeDPI Turkey" Description="GoodbyeDPI Turkey kontrol paneli"
+                  Target="[INSTALLFOLDER]GoodbyeDPI-Turkey-GUI.exe" WorkingDirectory="INSTALLFOLDER" />
+        <RegistryValue Root="HKCU" Key="Software\TrinsyCa\GoodbyeDPI Turkey" Name="DesktopShortcut" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </StandardDirectory>
+
+    <!--
+      Kaldırırken (yükseltmede değil): çalışan arayüzü kapat, zamanlanmış görevleri sil,
+      servis bu kurulumdaki goodbyedpi.exe'yi kullanıyorsa servisi kaldır. Dosyalar silinmeden önce.
+    -->
+    <CustomAction Id="CleanupOnUninstall" Directory="INSTALLFOLDER"
+                  ExeCommand="&quot;[INSTALLFOLDER]GoodbyeDPI-Turkey-GUI.exe&quot; --cleanup"
+                  Execute="deferred" Impersonate="no" Return="ignore" />
+    <InstallExecuteSequence>
+      <Custom Action="CleanupOnUninstall" Before="RemoveFiles" Condition="REMOVE~=&quot;ALL&quot; AND NOT UPGRADINGPRODUCTCODE" />
+    </InstallExecuteSequence>
+
+    <!-- Kurulum bitince uygulamayı başlat (kullanıcı olarak; ilk açılışta bir kez UAC ister) -->
+    <CustomAction Id="LaunchApplication" BinaryRef="Wix4UtilCA_X64" DllEntry="WixShellExec" Impersonate="yes" />
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="GoodbyeDPI Turkey'i şimdi başlat" />
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1" />
+
+    <WixVariable Id="WixUILicenseRtf" Value="License.rtf" />
+    <UI>
+      <ui:WixUI Id="WixUI_InstallDir" InstallDirectory="INSTALLFOLDER" />
+      <Publish Dialog="ExitDialog" Control="Finish" Property="WixShellExecTarget" Value="[INSTALLFOLDER]GoodbyeDPI-Turkey-GUI.exe"
+               Order="1" Condition="WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 AND NOT Installed" />
+      <Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="LaunchApplication"
+               Order="2" Condition="WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 AND NOT Installed" />
+    </UI>
+  </Package>
+</Wix>
