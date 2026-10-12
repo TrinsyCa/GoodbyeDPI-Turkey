@@ -50,7 +50,9 @@ public static class TestRunner
         return new PresetTestResult(await ProbeAllAsync(urls, ct));
     }
 
-    public static async Task<PresetTestResult> RunPresetAsync(string folder, Preset preset, IReadOnlyList<string> urls, CancellationToken ct)
+    /// <param name="onSite">Her site sonuçlandıkça çağrılır (canlı gösterim için); çağıranın bağlamında.</param>
+    public static async Task<PresetTestResult> RunPresetAsync(string folder, Preset preset, IReadOnlyList<string> urls,
+        CancellationToken ct, Action<SiteResult>? onSite = null)
     {
         var exe = DpiService.ExePath(folder);
         var output = new StringBuilder();
@@ -84,7 +86,7 @@ public static class TestRunner
             }
 
             FlushDnsCache();
-            return new PresetTestResult(await ProbeAllAsync(urls, ct));
+            return new PresetTestResult(await ProbeAllAsync(urls, ct, onSite));
         }
         finally
         {
@@ -113,10 +115,17 @@ public static class TestRunner
         }
     }
 
-    private static async Task<IReadOnlyList<SiteResult>> ProbeAllAsync(IReadOnlyList<string> urls, CancellationToken ct) =>
-        await Task.WhenAll(urls.Select(u => ProbeAsync(u, ct)));
+    private static async Task<IReadOnlyList<SiteResult>> ProbeAllAsync(IReadOnlyList<string> urls, CancellationToken ct,
+        Action<SiteResult>? onSite = null) =>
+        await Task.WhenAll(urls.Select(async u =>
+        {
+            var result = await ProbeAsync(u, ct);
+            onSite?.Invoke(result);
+            return result;
+        }));
 
-    private static async Task<SiteResult> ProbeAsync(string url, CancellationToken ct)
+    /// <summary>Tek bir siteye HTTPS bağlantısı dener. Canlı analiz paneli de kullanır.</summary>
+    public static async Task<SiteResult> ProbeAsync(string url, CancellationToken ct)
     {
         // Her denemede yeni bağlantı: havuzdaki eski bağlantı bir önceki yöntemin sonucunu taşımasın
         using var handler = new SocketsHttpHandler

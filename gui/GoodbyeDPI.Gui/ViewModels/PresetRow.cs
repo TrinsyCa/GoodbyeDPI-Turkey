@@ -42,13 +42,32 @@ public sealed class PresetRow(Preset preset) : INotifyPropertyChanged
         }
     }
 
-    public bool HasResult => Result is not null;
+    public bool HasResult => Result is not null || _live.Count > 0;
     public string? StartError => Result?.StartError;
 
+    // Test sürerken sonuçlanan siteler; yöntemin sonucu gelince Result'tan gösterilir
+    private readonly List<SiteResult> _live = [];
+
     /// <summary>Kartın altında gösterilen site bazında sonuç çipleri.</summary>
-    public IReadOnlyList<SiteView> Sites => Result?.Sites
+    public IReadOnlyList<SiteView> Sites => (Result?.Sites ?? _live)
         .Select(s => new SiteView(new Uri(s.Url).Host, s.Ok, s.Ok ? $"{s.Milliseconds} ms" : s.Error ?? "Hata"))
-        .ToList() ?? [];
+        .ToList();
+
+    /// <summary>Yeni test başlarken önceki sonucu temizler.</summary>
+    public void BeginTest()
+    {
+        _live.Clear();
+        Result = null;
+        IsTesting = true;
+    }
+
+    /// <summary>Test sürerken bir site sonuçlanınca çipi hemen göster.</summary>
+    public void AddLiveSite(SiteResult site)
+    {
+        _live.Add(site);
+        OnChanged(nameof(Sites));
+        OnChanged(nameof(HasResult));
+    }
 
     public bool IsTesting
     {
