@@ -1,3 +1,170 @@
+<div align="center">
+
+# GoodbyeDPI Turkey — Windows Kontrol Paneli
+
+**Hangi yöntemin sizin ağınızda çalıştığını kurmadan test edin, tek dokunuşla açıp kapatın.**
+
+[![Sürüm](https://img.shields.io/github/v/release/TrinsyCa/GoodbyeDPI-Turkey?label=s%C3%BCr%C3%BCm&color=8b5cf6)](https://github.com/TrinsyCa/GoodbyeDPI-Turkey/releases/latest)
+[![Platform](https://img.shields.io/badge/Windows-10%20%7C%2011%20(x64)-22d3ee.svg)](#kurulum)
+[![Lisans](https://img.shields.io/badge/Lisans-Apache%202.0-blue.svg)](LICENSE)
+
+### [⬇ Setup'ı indir — GoodbyeDPI-Turkey-GUI-Setup-1.0.0.msi](https://github.com/TrinsyCa/GoodbyeDPI-Turkey/releases/download/gui-v1.0.0/GoodbyeDPI-Turkey-GUI-Setup-1.0.0.msi)
+
+<sub>Windows 10/11 x64 · 63 MB · .NET ve GoodbyeDPI dosyaları içinde · [Tüm sürümler](https://github.com/TrinsyCa/GoodbyeDPI-Turkey/releases)</sub>
+
+</div>
+
+> [!NOTE]
+> Bu bölüm, bu fork'a (**[TrinsyCa/GoodbyeDPI-Turkey](https://github.com/TrinsyCa/GoodbyeDPI-Turkey)**) eklenen **Windows kontrol paneli** uygulamasını anlatır.
+> Asıl projenin ([cagritaskn/GoodbyeDPI-Turkey](https://github.com/cagritaskn/GoodbyeDPI-Turkey)) README'si değiştirilmeden **[aşağıda](#orijinal-goodbyedpi-turkey-readme)** duruyor.
+
+![Kontrol Paneli](docs/gui/01-kontrol-paneli.png)
+
+## Uygulamanın amacı
+
+GoodbyeDPI-Turkey, Türkiye'deki internet sağlayıcılarının farklı DPI (derin paket inceleme) davranışları için 7 ayrı yöntem sunar. Hangisinin çalışacağı ağdan ağa, hatta aynı sağlayıcıda modemden modeme değişir. Uygulamadan önceki kullanım şöyleydi:
+
+- `.cmd` dosyalarını **tek tek yönetici olarak çalıştırıp** hangisinin işe yaradığını elle denemek,
+- `turkey_dnsredir_*_superonline.cmd` yöntemlerinde **terminal penceresini sürekli açık tutmak**,
+- açıp kapatmak için servisleri elle kaldırıp kurmak,
+- VPN bağlanınca GoodbyeDPI'ın **VPN tünelini bozmasını** (`ERR_CONNECTION_RESET`, `ERR_SSL_PROTOCOL_ERROR`) elle çözmek.
+
+Bu uygulama bunların hepsini tek bir arayüzde topluyor: **yöntemleri kurmadan test eder, sizin cihazınızda çalışanı önerir, tek tıkla kurar ve arka planda çalıştırır.** VPN bağlanınca GoodbyeDPI'ı kendiliğinden durdurur.
+
+## Özellikler
+
+| | |
+|---|---|
+| 🚀 **İlk açılışta otomatik test** | Uygulama ilk kez açıldığında, ana pencere açılmadan önce tüm yöntemler bu ağda canlı olarak test edilir ve en iyisi önerilir. |
+| 🧪 **Kurmadan test** | Her yöntem birkaç saniyeliğine gizli bir işlem olarak çalıştırılır ve engelli sitelere gerçek HTTPS bağlantısı denenir. Site bazında ✓/✗ ve gecikme gösterilir. |
+| ⏻ **Tek dokunuşla aç/kapat** | Seçilen yöntem Windows servisi olarak kurulur: terminal açık kalmaz, bilgisayar yeniden başlayınca da çalışır. |
+| 🛡️ **VPN algılama** | Proton VPN, WireGuard, OpenVPN, NordVPN, Mullvad gibi VPN'ler bağlanınca GoodbyeDPI durdurulur, VPN kapanınca geri açılır. Ayarlardan kapatılabilir. |
+| 📈 **Canlı analiz** | Genel IP, konum, sağlayıcı, engelli siteye anlık erişim, aktif yöntem, DNS, çalışma süresi, işlemci/bellek ve son 60 saniyenin trafik grafiği. |
+| 🔑 **Tek UAC onayı** | Yönetici izni yalnızca ilk açılışta istenir, sonraki açılışlarda sorulmaz. |
+| 🔗 **Repoya bağlı yöntemler** | Yöntemler `windows/service_install_*.cmd` dosyalarından okunur. Repoya yeni bir `.cmd` eklendiğinde uygulamada kendiliğinden görünür. |
+| 🧰 **Çakışma tespiti** | Servisi dışarıdan açıp kapatan script ya da elle başlatılmış `goodbyedpi.exe` bulunursa uyarır ve tek tıkla kaldırır. |
+| 🧹 **Kayıt temizliği** | Servis, VPN ve test olaylarının kaydı tutulur. 7 günden eski kayıtlar otomatik silinir; istenirse tek tıkla hepsi temizlenir. |
+| 🖥️ **Tepside çalışma** | Windows açılınca tepside başlar. Pencere kapatılınca VPN takibi arka planda sürer. |
+
+## Ekran görüntüleri
+
+<table>
+  <tr>
+    <td width="50%"><b>İlk açılış kurulumu</b><br>Yöntemler uygulama açılmadan, canlı olarak test edilir.<br><br><img src="docs/gui/05-ilk-kurulum.png" alt="İlk açılış kurulumu"></td>
+    <td width="50%"><b>Yöntemler</b><br>Her yöntemin bu ağdaki sonucu, site bazında.<br><br><img src="docs/gui/02-yontemler.png" alt="Yöntemler"></td>
+  </tr>
+  <tr>
+    <td width="50%"><b>Ayarlar</b><br>VPN algılama, Windows ile başlatma, test siteleri.<br><br><img src="docs/gui/03-ayarlar.png" alt="Ayarlar"></td>
+    <td width="50%"><b>Kayıtlar</b><br>Servis, VPN ve test olayları; otomatik ve elle temizleme.<br><br><img src="docs/gui/04-kayitlar.png" alt="Kayıtlar"></td>
+  </tr>
+</table>
+
+## Kurulum
+
+1. **[GoodbyeDPI-Turkey-GUI-Setup-1.0.0.msi](https://github.com/TrinsyCa/GoodbyeDPI-Turkey/releases/download/gui-v1.0.0/GoodbyeDPI-Turkey-GUI-Setup-1.0.0.msi)** dosyasını indirin (ya da **[Releases](https://github.com/TrinsyCa/GoodbyeDPI-Turkey/releases)** sayfasından en son sürümü seçin).
+2. Setup'ı çalıştırın. Uygulama `C:\Program Files\GoodbyeDPI Turkey` klasörüne kurulur; Başlat menüsüne ve masaüstüne kısayol eklenir.
+3. Uygulama ilk açılışta bir kez yönetici izni ister, ardından yöntemleri test eden kurulum ekranı açılır.
+4. Test bitince **"Önerileni kur ve başla"** ile bitirin.
+
+> [!TIP]
+> Setup; .NET çalışma ortamını, `goodbyedpi.exe`'yi, WinDivert sürücüsünü ve tüm yöntemleri içinde getirir. Ayrıca ZIP indirmeniz ya da .NET kurmanız gerekmez.
+
+> [!IMPORTANT]
+> Test sırasında VPN **kapalı** olmalı. VPN açıkken trafik VPN'den geçtiği için test bu ağı ölçemez; kurulum ekranı bunu algılar ve VPN'i kapatmanızı ister.
+
+## Kullanım
+
+- **GoodbyeDPI'ı açmak/kapatmak:** Kontrol Paneli'ndeki güç düğmesine dokunun. Ya da görev çubuğundaki tepsi simgesine sağ tıklayıp **"GoodbyeDPI'ı aç/kapat"** seçeneğini kullanın.
+- **Uygulamayı açmak:** Masaüstü ya da Başlat menüsündeki **GoodbyeDPI Turkey** kısayolunu kullanın. Uygulama zaten açıksa mevcut pencere öne gelir.
+- **Uygulamayı kapatmak:** Penceredeki **✕** düğmesi uygulamayı kapatmaz, tepsiye küçültür; VPN takibi sürer. Tamamen çıkmak için tepsi simgesine sağ tıklayıp **Çıkış**'ı seçin.
+
+> [!NOTE]
+> Uygulamayı kapatmak GoodbyeDPI'ı kapatmaz. GoodbyeDPI bir Windows servisi olarak çalışmaya devam eder; uygulama kapalıyken yalnızca VPN algılama çalışmaz.
+
+- **Kayıtlar:** **Kayıtlar** sayfasında servis işlemleri, VPN olayları ve test sonuçları görünür. 7 günden eski kayıtlar kendiliğinden silinir; **Kayıtları temizle** ile hepsi silinebilir.
+- **Yöntem değiştirmek:** **Yöntemler** sayfasında **Tümünü test et**'e basın, sonra istediğiniz yöntemde **Kur**'a basın. Ağ değiştirdiyseniz (ör. başka bir modem ya da mobil hotspot) testi tekrarlamanız önerilir.
+
+## Nasıl çalışır?
+
+<details>
+<summary><b>Yöntem testi</b></summary>
+
+1. Çalışan GoodbyeDPI servisi geçici olarak durdurulur.
+2. **Engelsiz kontrol:** GoodbyeDPI olmadan test sitelerine bağlanılır. Siteler zaten açılıyorsa test anlamsızdır ve uygulama bunu söyler.
+3. Her yöntem için `goodbyedpi.exe` o yöntemin argümanlarıyla gizli bir alt işlem olarak başlatılır, Windows DNS önbelleği temizlenir (eski zehirli DNS cevapları sonucu yanıltmasın) ve sitelere gerçek HTTPS isteği atılır. TLS el sıkışması tamamlanırsa yöntem o site için çalışıyor sayılır.
+4. Her adımda servisin kapalı olduğu doğrulanır; başka bir program servisi açarsa test sonuçları güvenilmez olarak işaretlenir.
+5. Test bitince servis eski durumuna döner. Tüm siteleri açan yöntemler arasında DNS'i kendisi yönlendiren ve en hızlı olan önerilir.
+
+Varsayılan test siteleri `discord.com`, `cdn.discordapp.com` ve `www.wattpad.com`. **Ayarlar → Test siteleri** bölümünden değiştirilebilir.
+</details>
+
+<details>
+<summary><b>Tek UAC onayı</b></summary>
+
+Uygulama ilk açılışta kendini **"en yüksek yetkiyle çalış"** ayarlı bir zamanlanmış göreve (`GoodbyeDPI-Turkey-GUI`) kaydeder. Sonraki açılışlarda yetkisiz açılan kopya bu görevi tetikler; Görev Zamanlayıcı da uygulamayı UAC sormadan yönetici olarak başlatır. Görev sabit bir exe yolunu argümansız çalıştırır.
+
+Bu yüzden Setup uygulamayı **Program Files**'a kurar: o klasöre yönetici olmadan yazılamadığı için başka bir program exe'yi değiştirip bu görev üzerinden yönetici yetkisi kazanamaz.
+</details>
+
+<details>
+<summary><b>VPN algılama</b></summary>
+
+GoodbyeDPI, WinDivert sürücüsüyle tüm ağ kartlarındaki trafiğe müdahale eder ve hangi trafiğin VPN tünelinden geçtiğini ayırt edemez. `--set-ttl` ile gönderdiği sahte paketler tünelin içinden VPN sunucusuna, oradan da hedef siteye ulaşır ve bağlantıyı bozar. Bu yüzden uygulama VPN adaptörlerini ve Proton VPN'in WireGuard servisini 2 saniyede bir kontrol eder. VPN bağlanınca servisi durdurur, kapanınca geri açar. Yalnızca kendi durdurduğu servisi geri açar: GoodbyeDPI'ı siz kapattıysanız VPN kapanınca açılmaz.
+</details>
+
+## Gizlilik ve güvenlik
+
+- Uygulama telemetri göndermez. Ayarlar ve loglar yalnızca `C:\ProgramData\GoodbyeDPI-Turkey-GUI\` altında tutulur; loglar 7 gün sonra silinir.
+- Canlı analizdeki genel IP, konum ve sağlayıcı bilgisi için **[ipinfo.io](https://ipinfo.io)**'ya 5 dakikada bir istek atılır. Erişim kontrolü için ilk test sitesine 45 saniyede bir bağlanılır.
+- Sisteme bıraktıkları: `GoodbyeDPI` Windows servisi, WinDivert sürücüsü, `GoodbyeDPI-Turkey-GUI` ve `GoodbyeDPI-Turkey-GUI-Autostart` zamanlanmış görevleri. Setup ile kaldırınca görevler silinir; servis bu kurulumdaki `goodbyedpi.exe`'yi kullanıyorsa o da kaldırılır.
+
+## Kaldırma
+
+**Ayarlar → Uygulamalar → GoodbyeDPI Turkey → Kaldır**. Yalnızca GoodbyeDPI servisini kaldırmak isterseniz uygulamada **Ayarlar → Servisi kaldır**'ı kullanın (`service_remove.cmd` ile aynı işi yapar).
+
+## Kaynaktan derleme
+
+Gereksinimler: Windows 10/11 x64, [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
+
+```powershell
+# Uygulamayı derleyip çalıştırmak
+dotnet run --project gui\GoodbyeDPI.Gui
+
+# Setup (MSI) oluşturmak: GoodbyeDPI release ZIP'i ya da açıldığı klasör gerekir
+.\gui\build-installer.ps1 -GoodbyeDpi "$env:USERPROFILE\Downloads\goodbyedpi-0.2.3rc3-turkey.zip"
+
+# README ekran görüntülerini yenilemek (yetki gerektirmez, hiçbir şeyi değiştirmez)
+.\gui\GoodbyeDPI.Gui\bin\Debug\net8.0-windows\GoodbyeDPI-Turkey-GUI.exe --screenshots docs\gui
+```
+
+| Klasör | İçerik |
+|---|---|
+| [`gui/GoodbyeDPI.Gui`](gui/GoodbyeDPI.Gui) | WPF uygulaması (.NET 8) |
+| [`gui/GoodbyeDPI.Gui/Core`](gui/GoodbyeDPI.Gui/Core) | Servis yönetimi, yöntem testi, VPN izleme, canlı analiz, yetki yükseltme |
+| [`gui/installer`](gui/installer) | WiX 5 ile MSI kurulum paketi |
+| [`gui/build-installer.ps1`](gui/build-installer.ps1) | Tek komutla Setup üretir |
+
+## Teşekkürler
+
+- **[ValdikSS/GoodbyeDPI](https://github.com/ValdikSS/GoodbyeDPI)**: asıl DPI atlatma aracı
+- **[cagritaskn/GoodbyeDPI-Turkey](https://github.com/cagritaskn/GoodbyeDPI-Turkey)**: Türkiye uyarlaması ve yöntemler
+- **[basil00/WinDivert](https://github.com/basil00/WinDivert)**: paket yakalama sürücüsü
+
+Uygulama, bu repodaki diğer kodlar gibi [Apache 2.0](LICENSE) lisanslıdır.
+
+<br>
+
+---
+
+<a id="orijinal-goodbyedpi-turkey-readme"></a>
+
+# Orijinal GoodbyeDPI-Turkey README'si
+
+> [!NOTE]
+> Bu çizginin altındaki bölüm, asıl proje **[cagritaskn/GoodbyeDPI-Turkey](https://github.com/cagritaskn/GoodbyeDPI-Turkey)**'nin README'sidir ve değiştirilmeden korunmuştur. `.cmd` dosyalarıyla elle kurulum, macOS desteği ve sorun giderme için buraya bakın.
+
+---
+
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Windows%20%7C%20macOS-lightgrey.svg)](#)
 [![Downloads](https://img.shields.io/github/downloads/cagritaskn/GoodbyeDPI-Turkey/total.svg)](https://github.com/cagritaskn/GoodbyeDPI-Turkey/releases/)
