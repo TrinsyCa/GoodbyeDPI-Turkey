@@ -60,6 +60,9 @@ public sealed class VpnWatcher : IDisposable
         }
     }
 
+    /// <summary>İzleyici kurmadan anlık kontrol (ilk kurulum ekranı için).</summary>
+    public static bool DetectNow() => FindVpnAdapter() is not null || AnyVpnServiceRunning();
+
     private static string? FindVpnAdapter() =>
         NetworkInterface.GetAllNetworkInterfaces()
             .Where(n => n.OperationalStatus == OperationalStatus.Up)

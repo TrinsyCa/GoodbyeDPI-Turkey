@@ -1,0 +1,309 @@
+<Window x:Class="GoodbyeDPI.Gui.SetupWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:GoodbyeDPI.Gui.ViewModels"
+        xmlns:controls="clr-namespace:GoodbyeDPI.Gui.Controls"
+        Title="GoodbyeDPI Turkey – İlk kurulum" Width="640" Height="640" ResizeMode="CanMinimize"
+        Background="{StaticResource Bg0}" Icon="Assets/icon.ico"
+        WindowStartupLocation="CenterScreen" FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="13"
+        TextOptions.TextFormattingMode="Display" UseLayoutRounding="True">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="40" ResizeBorderThickness="0" GlassFrameThickness="0" CornerRadius="0" UseAeroCaptionButtons="False" />
+    </WindowChrome.WindowChrome>
+
+    <Grid x:Name="RootGrid" ClipToBounds="True">
+        <controls:AuroraBackground />
+
+        <Grid Margin="36,34,36,26">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <!-- ═══════════ Başlık: dönen halkalı logo + canlı adım ═══════════ -->
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+
+                <Grid x:Name="LogoHost" Width="78" Height="78">
+                    <Ellipse x:Name="LogoRing" StrokeThickness="3" StrokeDashArray="9 15" StrokeDashCap="Round"
+                             Stroke="{StaticResource AccentGradient}" RenderTransformOrigin="0.5,0.5">
+                        <Ellipse.RenderTransform>
+                            <RotateTransform x:Name="LogoSpin" />
+                        </Ellipse.RenderTransform>
+                    </Ellipse>
+                    <Border x:Name="LogoCore" Width="54" Height="54" CornerRadius="17" Background="{StaticResource AccentGradient}" RenderTransformOrigin="0.5,0.5">
+                        <Border.RenderTransform>
+                            <ScaleTransform x:Name="LogoBreath" />
+                        </Border.RenderTransform>
+                        <Border.Effect>
+                            <DropShadowEffect x:Name="LogoGlow" Color="{StaticResource AccentColor}" BlurRadius="34" ShadowDepth="0" Opacity="0.6" />
+                        </Border.Effect>
+                        <TextBlock x:Name="LogoGlyph" Text="&#xEA18;" FontFamily="{StaticResource IconFont}" FontSize="24" Foreground="White"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <Grid.Triggers>
+                        <EventTrigger RoutedEvent="Loaded">
+                            <BeginStoryboard>
+                                <Storyboard>
+                                    <DoubleAnimation Storyboard.TargetName="LogoSpin" Storyboard.TargetProperty="Angle" From="0" To="360" Duration="0:0:2.2" RepeatBehavior="Forever" />
+                                    <DoubleAnimation Storyboard.TargetName="LogoBreath" Storyboard.TargetProperty="ScaleX" From="1" To="1.06" Duration="0:0:1.1" AutoReverse="True" RepeatBehavior="Forever">
+                                        <DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut" /></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                    <DoubleAnimation Storyboard.TargetName="LogoBreath" Storyboard.TargetProperty="ScaleY" From="1" To="1.06" Duration="0:0:1.1" AutoReverse="True" RepeatBehavior="Forever">
+                                        <DoubleAnimation.EasingFunction><SineEase EasingMode="EaseInOut" /></DoubleAnimation.EasingFunction>
+                                    </DoubleAnimation>
+                                </Storyboard>
+                            </BeginStoryboard>
+                        </EventTrigger>
+                    </Grid.Triggers>
+                </Grid>
+
+                <StackPanel Grid.Column="1" Margin="20,0,0,0" VerticalAlignment="Center">
+                    <TextBlock Text="GOODBYEDPI TURKEY · İLK KURULUM" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource Muted}" />
+                    <TextBlock x:Name="HeaderTitle" Text="Cihazınız hazırlanıyor" FontSize="24" FontWeight="Bold" Margin="0,4,0,0">
+                        <TextBlock.RenderTransform>
+                            <TranslateTransform x:Name="HeaderTitleY" />
+                        </TextBlock.RenderTransform>
+                    </TextBlock>
+                    <TextBlock x:Name="StepText" Style="{StaticResource MutedText}" FontSize="13" Margin="0,4,0,0"
+                               Text="Bu ağda hangi yöntemin çalıştığı bulunuyor…" />
+                </StackPanel>
+            </Grid>
+
+            <!-- ═══════════ İlerleme ═══════════ -->
+            <StackPanel Grid.Row="1" Margin="0,26,0,0">
+                <DockPanel>
+                    <TextBlock x:Name="PercentText" DockPanel.Dock="Right" Text="%0" FontFamily="{StaticResource MonoFont}" FontWeight="SemiBold" />
+                    <TextBlock x:Name="ElapsedText" Style="{StaticResource MutedText}" FontFamily="{StaticResource MonoFont}" Text="0 sn" />
+                </DockPanel>
+                <Grid x:Name="ProgressTrack" Height="8" Margin="0,8,0,0">
+                    <Border CornerRadius="4" Background="#14FFFFFF" />
+                    <!-- Dolu kısım: parlama bunun içinde kalsın diye ölçek yerine genişlik canlandırılır -->
+                    <Grid x:Name="ProgressFill" Width="0" HorizontalAlignment="Left" ClipToBounds="True">
+                    <Border CornerRadius="4" Background="{StaticResource AccentGradient}" />
+                    <Rectangle x:Name="ProgressShineRect" Width="140" HorizontalAlignment="Left">
+                        <Rectangle.Fill>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="#00FFFFFF" Offset="0" />
+                                <GradientStop Color="#80FFFFFF" Offset="0.5" />
+                                <GradientStop Color="#00FFFFFF" Offset="1" />
+                            </LinearGradientBrush>
+                        </Rectangle.Fill>
+                        <Rectangle.RenderTransform>
+                            <TranslateTransform x:Name="ProgressShine" />
+                        </Rectangle.RenderTransform>
+                        <Rectangle.Triggers>
+                            <EventTrigger RoutedEvent="Loaded">
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetName="ProgressShine" Storyboard.TargetProperty="X" From="-160" To="700" Duration="0:0:1.6" RepeatBehavior="Forever" />
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </EventTrigger>
+                        </Rectangle.Triggers>
+                    </Rectangle>
+                    </Grid>
+                </Grid>
+            </StackPanel>
+
+            <!-- ═══════════ Sonuç özeti (test bitince) ═══════════ -->
+            <Border x:Name="SummaryCard" Grid.Row="2" Margin="0,18,0,0" CornerRadius="14" Padding="18,14" Background="#1A8B5CF6"
+                    BorderBrush="#558B5CF6" BorderThickness="1" Visibility="Collapsed" RenderTransformOrigin="0.5,0.5">
+                <Border.RenderTransform>
+                    <ScaleTransform x:Name="SummaryScale" />
+                </Border.RenderTransform>
+                <DockPanel>
+                    <Border DockPanel.Dock="Left" Width="38" Height="38" CornerRadius="11" Margin="0,0,14,0" Background="{StaticResource AccentGradient}">
+                        <TextBlock x:Name="SummaryGlyph" Text="&#xE735;" FontFamily="{StaticResource IconFont}" FontSize="16" Foreground="White"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <StackPanel VerticalAlignment="Center">
+                        <TextBlock x:Name="SummaryTitle" FontWeight="SemiBold" FontSize="14.5" TextWrapping="Wrap" />
+                        <TextBlock x:Name="SummaryDetail" Style="{StaticResource MutedText}" Margin="0,3,0,0" />
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+
+            <!-- ═══════════ Adımlar ═══════════ -->
+            <ScrollViewer x:Name="StepsScroll" Grid.Row="3" Margin="0,18,0,0" VerticalScrollBarVisibility="Hidden" controls:SmoothScroll.IsEnabled="True">
+                <StackPanel>
+                    <!-- Engelsiz kontrol -->
+                    <Border CornerRadius="10" Padding="12,10" Margin="0,0,0,6" Background="#0DFFFFFF">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="28" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <Grid Width="16" Height="16" HorizontalAlignment="Left">
+                                <Ellipse x:Name="BaselineSpinner" StrokeThickness="2" StrokeDashArray="3 3" Stroke="{StaticResource Accent2}" RenderTransformOrigin="0.5,0.5" Visibility="Collapsed">
+                                    <Ellipse.RenderTransform>
+                                        <RotateTransform x:Name="BaselineSpin" />
+                                    </Ellipse.RenderTransform>
+                                    <Ellipse.Triggers>
+                                        <EventTrigger RoutedEvent="Loaded">
+                                            <BeginStoryboard>
+                                                <Storyboard>
+                                                    <DoubleAnimation Storyboard.TargetName="BaselineSpin" Storyboard.TargetProperty="Angle" From="0" To="360" Duration="0:0:1" RepeatBehavior="Forever" />
+                                                </Storyboard>
+                                            </BeginStoryboard>
+                                        </EventTrigger>
+                                    </Ellipse.Triggers>
+                                </Ellipse>
+                                <Ellipse x:Name="BaselineDot" Width="7" Height="7" Fill="{StaticResource Muted}" Opacity="0.6" />
+                                <TextBlock x:Name="BaselineGlyph" FontFamily="{StaticResource IconFont}" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            </Grid>
+                            <StackPanel Grid.Column="1">
+                                <TextBlock Text="Engelsiz erişim kontrolü" FontWeight="SemiBold" />
+                                <TextBlock Style="{StaticResource MutedText}" FontSize="11.5" Margin="0,2,0,0" Text="GoodbyeDPI olmadan test siteleri gerçekten engelli mi?" />
+                            </StackPanel>
+                            <TextBlock x:Name="BaselineStatus" Grid.Column="2" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource Muted}" VerticalAlignment="Center" Text="Bekliyor" />
+                        </Grid>
+                    </Border>
+
+                    <ItemsControl x:Name="SetupList">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type vm:PresetRow}">
+                                <Border x:Name="Row" CornerRadius="10" Padding="12,10" Margin="0,0,0,6" Background="#0DFFFFFF" BorderThickness="1" BorderBrush="Transparent">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="28" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid Width="16" Height="16" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="0,1,0,0">
+                                            <Ellipse x:Name="Spinner" StrokeThickness="2" StrokeDashArray="3 3" Stroke="{StaticResource Accent2}" RenderTransformOrigin="0.5,0.5" Visibility="Collapsed">
+                                                <Ellipse.RenderTransform>
+                                                    <RotateTransform x:Name="Spin" />
+                                                </Ellipse.RenderTransform>
+                                                <Ellipse.Triggers>
+                                                    <EventTrigger RoutedEvent="Loaded">
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation Storyboard.TargetName="Spin" Storyboard.TargetProperty="Angle" From="0" To="360" Duration="0:0:1" RepeatBehavior="Forever" />
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </EventTrigger>
+                                                </Ellipse.Triggers>
+                                            </Ellipse>
+                                            <Ellipse x:Name="Dot" Width="7" Height="7" Fill="{StaticResource Muted}" Opacity="0.6" />
+                                            <TextBlock x:Name="Glyph" FontFamily="{StaticResource IconFont}" FontSize="12" HorizontalAlignment="Center" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                                                <TextBlock.RenderTransform>
+                                                    <ScaleTransform />
+                                                </TextBlock.RenderTransform>
+                                            </TextBlock>
+                                        </Grid>
+                                        <StackPanel Grid.Column="1">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                                                <Border Style="{StaticResource Chip}" Background="{StaticResource AccentGradient}" Padding="7,1" Visibility="{Binding IsRecommended, Converter={StaticResource BoolToVis}}">
+                                                    <TextBlock Text="Önerilen" FontSize="10.5" FontWeight="SemiBold" Foreground="White" />
+                                                </Border>
+                                            </StackPanel>
+                                            <ItemsControl ItemsSource="{Binding Sites}" Margin="0,6,0,0" Visibility="{Binding HasResult, Converter={StaticResource BoolToVis}}">
+                                                <ItemsControl.ItemsPanel>
+                                                    <ItemsPanelTemplate>
+                                                        <WrapPanel />
+                                                    </ItemsPanelTemplate>
+                                                </ItemsControl.ItemsPanel>
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate DataType="{x:Type vm:SiteView}">
+                                                        <Border x:Name="SiteChip" CornerRadius="5" Padding="6,2" Margin="0,0,5,4" Background="#1A34D399">
+                                                            <StackPanel Orientation="Horizontal">
+                                                                <TextBlock x:Name="SiteGlyph" Text="{Binding Glyph}" FontFamily="{StaticResource IconFont}" FontSize="8.5" VerticalAlignment="Center" Foreground="{StaticResource Good}" Margin="0,0,5,0" />
+                                                                <TextBlock Text="{Binding Host}" FontSize="10.5" />
+                                                            </StackPanel>
+                                                        </Border>
+                                                        <DataTemplate.Triggers>
+                                                            <DataTrigger Binding="{Binding Ok}" Value="False">
+                                                                <Setter TargetName="SiteChip" Property="Background" Value="#1AF87171" />
+                                                                <Setter TargetName="SiteGlyph" Property="Foreground" Value="{StaticResource Bad}" />
+                                                            </DataTrigger>
+                                                        </DataTemplate.Triggers>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                        <TextBlock x:Name="Status" Grid.Column="2" Text="{Binding StatusText}" FontSize="11.5" FontWeight="SemiBold"
+                                                   Foreground="{StaticResource Muted}" VerticalAlignment="Top" Margin="12,1,0,0" />
+                                    </Grid>
+                                </Border>
+
+                                <DataTemplate.Resources>
+                                    <Storyboard x:Key="GlyphPop">
+                                        <DoubleAnimation Storyboard.TargetName="Glyph" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleX)" From="0.3" To="1" Duration="0:0:0.55">
+                                            <DoubleAnimation.EasingFunction><ElasticEase Oscillations="2" Springiness="4" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                        <DoubleAnimation Storyboard.TargetName="Glyph" Storyboard.TargetProperty="(UIElement.RenderTransform).(ScaleTransform.ScaleY)" From="0.3" To="1" Duration="0:0:0.55">
+                                            <DoubleAnimation.EasingFunction><ElasticEase Oscillations="2" Springiness="4" /></DoubleAnimation.EasingFunction>
+                                        </DoubleAnimation>
+                                    </Storyboard>
+                                </DataTemplate.Resources>
+
+                                <DataTemplate.Triggers>
+                                    <DataTrigger Binding="{Binding IsTesting}" Value="True">
+                                        <Setter TargetName="Spinner" Property="Visibility" Value="Visible" />
+                                        <Setter TargetName="Dot" Property="Visibility" Value="Collapsed" />
+                                        <Setter TargetName="Row" Property="BorderBrush" Value="#558B5CF6" />
+                                        <Setter TargetName="Row" Property="Background" Value="#148B5CF6" />
+                                        <Setter TargetName="Status" Property="Foreground" Value="{StaticResource Accent2}" />
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Kind}" Value="{x:Static vm:CompatKind.Full}">
+                                        <Setter TargetName="Dot" Property="Visibility" Value="Collapsed" />
+                                        <Setter TargetName="Glyph" Property="Text" Value="&#xE73E;" />
+                                        <Setter TargetName="Glyph" Property="Foreground" Value="{StaticResource Good}" />
+                                        <Setter TargetName="Status" Property="Foreground" Value="{StaticResource Good}" />
+                                        <DataTrigger.EnterActions>
+                                            <BeginStoryboard Storyboard="{StaticResource GlyphPop}" />
+                                        </DataTrigger.EnterActions>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Kind}" Value="{x:Static vm:CompatKind.Partial}">
+                                        <Setter TargetName="Dot" Property="Visibility" Value="Collapsed" />
+                                        <Setter TargetName="Glyph" Property="Text" Value="&#xE7BA;" />
+                                        <Setter TargetName="Glyph" Property="Foreground" Value="{StaticResource Warn}" />
+                                        <Setter TargetName="Status" Property="Foreground" Value="{StaticResource Warn}" />
+                                        <DataTrigger.EnterActions>
+                                            <BeginStoryboard Storyboard="{StaticResource GlyphPop}" />
+                                        </DataTrigger.EnterActions>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding Kind}" Value="{x:Static vm:CompatKind.None}">
+                                        <Setter TargetName="Dot" Property="Visibility" Value="Collapsed" />
+                                        <Setter TargetName="Glyph" Property="Text" Value="&#xE711;" />
+                                        <Setter TargetName="Glyph" Property="Foreground" Value="{StaticResource Bad}" />
+                                        <Setter TargetName="Status" Property="Foreground" Value="{StaticResource Bad}" />
+                                        <DataTrigger.EnterActions>
+                                            <BeginStoryboard Storyboard="{StaticResource GlyphPop}" />
+                                        </DataTrigger.EnterActions>
+                                    </DataTrigger>
+                                    <DataTrigger Binding="{Binding IsRecommended}" Value="True">
+                                        <Setter TargetName="Row" Property="BorderBrush" Value="#778B5CF6" />
+                                    </DataTrigger>
+                                </DataTemplate.Triggers>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+
+            <!-- ═══════════ Alt bilgi ═══════════ -->
+            <DockPanel Grid.Row="4" Margin="0,16,0,0">
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button x:Name="SkipButton" Content="Atla" Click="Skip_Click" Padding="14,7" FontSize="12.5" />
+                    <Button x:Name="RetryButton" Content="Tekrar dene" Click="Retry_Click" Padding="14,7" FontSize="12.5" Margin="8,0,0,0" Visibility="Collapsed" />
+                    <Button x:Name="SecondaryButton" Click="Secondary_Click" Padding="14,7" FontSize="12.5" Margin="8,0,0,0" Visibility="Collapsed" />
+                    <Button x:Name="PrimaryButton" Style="{StaticResource AccentButton}" Click="Primary_Click" Padding="16,7" FontSize="12.5" Margin="8,0,0,0" Visibility="Collapsed" />
+                </StackPanel>
+                <TextBlock x:Name="LogLine" Style="{StaticResource MutedText}" FontFamily="{StaticResource MonoFont}" FontSize="10.5"
+                           TextWrapping="NoWrap" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" Margin="0,0,16,0" Opacity="0.7"
+                           Text="Bu işlem yalnızca ilk açılışta yapılır ve yaklaşık bir dakika sürer." />
+            </DockPanel>
+        </Grid>
+    </Grid>
+</Window>

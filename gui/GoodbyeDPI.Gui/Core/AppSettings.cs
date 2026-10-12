@@ -42,6 +42,9 @@ public sealed class AppSettings
         "https://www.wattpad.com/",
     ];
 
+    /// <summary>İlk açılıştaki kurulum/test ekranı gösterildi mi?</summary>
+    public bool FirstRunCompleted { get; set; }
+
     /// <summary>Son test sonuçları (anahtar: yöntem argümanları). Uygulama yeniden açılınca test baştan yapılmasın.</summary>
     public Dictionary<string, PresetTestResult> LastResults { get; set; } = [];
 

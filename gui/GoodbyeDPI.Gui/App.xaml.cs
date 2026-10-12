@@ -75,28 +75,51 @@ public partial class App : Application
             }
         });
 
+        // İlk açılış: ana pencereden önce tüm yöntemleri test eden kurulum ekranı
+        if (!settings.FirstRunCompleted && !startInTray)
+        {
+            var setup = new SetupWindow(settings);
+            MainWindow = setup; // Bu sırada kısayola tıklanırsa kurulum ekranı öne gelsin
+            setup.Closed += (_, _) =>
+            {
+                settings.FirstRunCompleted = true;
+                settings.Save();
+                OpenMainWindow(settings, show: true);
+            };
+            setup.Show();
+            return;
+        }
+
+        OpenMainWindow(settings, show: !startInTray);
+    }
+
+    private void OpenMainWindow(AppSettings settings, bool show)
+    {
         var window = new MainWindow(settings);
         MainWindow = window;
         CreateTray(window);
-        if (!startInTray)
+        if (show)
             window.Show();
     }
 
     private void StartScreenshotMode(string directory)
     {
-        var window = new MainWindow(AppSettings.Load(), readOnly: true)
-        {
-            ShowInTaskbar = false,
-            WindowStartupLocation = WindowStartupLocation.Manual,
-            Left = -20000, // Ekran dışında: kullanıcı pencerenin açılıp kapandığını görmesin
-            Top = 0,
-        };
-        MainWindow = window;
-        window.Show();
-        window.Dispatcher.BeginInvoke(async () =>
+        var settings = AppSettings.Load();
+        Dispatcher.BeginInvoke(async () =>
         {
             try
             {
+                System.IO.Directory.CreateDirectory(directory);
+
+                // Ekran dışında açılır: kullanıcı pencerelerin açılıp kapandığını görmez
+                var setup = new SetupWindow(settings, preview: true) { ShowInTaskbar = false, WindowStartupLocation = WindowStartupLocation.Manual, Left = -20000, Top = 0 };
+                setup.Show();
+                await setup.CaptureAsync(System.IO.Path.Combine(directory, "05-ilk-kurulum.png"));
+                setup.Close();
+
+                var window = new MainWindow(settings, readOnly: true) { ShowInTaskbar = false, WindowStartupLocation = WindowStartupLocation.Manual, Left = -20000, Top = 0 };
+                MainWindow = window;
+                window.Show();
                 await window.CaptureScreenshotsAsync(directory);
             }
             catch (Exception ex)
