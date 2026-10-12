@@ -36,4 +36,52 @@ public static class Log
         }
         LineAdded?.Invoke(line);
     }
+
+    /// <summary>
+    /// Belirtilen günden eski satırları siler. Satırlar "yyyy-MM-dd HH:mm:ss" ile başlar; tarihi
+    /// olmayan devam satırları (ör. hata yığını) bağlı oldukları satırla birlikte tutulur ya da silinir.
+    /// </summary>
+    public static void Prune(int keepDays)
+    {
+        var cutoff = DateTime.Now.AddDays(-keepDays);
+        lock (Gate)
+        {
+            try
+            {
+                var old = FilePath + ".old";
+                if (File.Exists(old) && File.GetLastWriteTime(old) < cutoff)
+                    File.Delete(old);
+                if (!File.Exists(FilePath))
+                    return;
+
+                var lines = File.ReadAllLines(FilePath);
+                var kept = new List<string>(lines.Length);
+                var keep = true;
+                foreach (var line in lines)
+                {
+                    if (line.Length >= 19 && DateTime.TryParseExact(line[..19], "yyyy-MM-dd HH:mm:ss",
+                            System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var at))
+                        keep = at >= cutoff;
+                    if (keep)
+                        kept.Add(line);
+                }
+                if (kept.Count != lines.Length)
+                    File.WriteAllLines(FilePath, kept);
+            }
+            catch
+            {
+                // Temizlik başarısız olursa bir sonraki denemede tekrar denenir
+            }
+        }
+    }
+
+    /// <summary>Tüm kayıtları siler (Kayıtlar sayfasındaki "Temizle").</summary>
+    public static void Clear()
+    {
+        lock (Gate)
+        {
+            File.Delete(FilePath + ".old");
+            File.Delete(FilePath);
+        }
+    }
 }

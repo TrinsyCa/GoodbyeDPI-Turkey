@@ -36,6 +36,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool? _vpnVisual;
     private DateTime? _stoppedByUsAt;
     private readonly LiveMonitor _live;
+    private readonly DispatcherTimer? _pruneTimer;
     private readonly List<(double Down, double Up)> _traffic = [];
     private const int ChartPoints = 60; // Son 60 saniye
 
@@ -56,6 +57,15 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         _settings = settings;
         _readOnly = readOnly;
         VersionText.Text = $"v{typeof(MainWindow).Assembly.GetName().Version?.ToString(3)}";
+        LogsSubtitle.Text = $"{settings.LogRetentionDays} günden eski kayıtlar otomatik silinir.";
+        if (!readOnly)
+        {
+            Log.Prune(settings.LogRetentionDays);
+            // Uygulama günlerce tepside açık kalabilir: temizliği düzenli tekrarla
+            _pruneTimer = new DispatcherTimer { Interval = TimeSpan.FromHours(6) };
+            _pruneTimer.Tick += (_, _) => Task.Run(() => Log.Prune(_settings.LogRetentionDays));
+            _pruneTimer.Start();
+        }
         LoadLogTail();
 
         AutoPauseCheck.IsChecked = settings.AutoPauseOnVpn;
@@ -279,6 +289,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         if (page == PageMethods)
             AnimateCardsIn();
+        else if (page == PageLogs)
+            Dispatcher.BeginInvoke(LogBox.ScrollToEnd, DispatcherPriority.Loaded); // En yeni kayıtlar görünsün
     }
 
     /// <summary>Yöntem kartları sırayla, aşağıdan kayarak gelir.</summary>
@@ -988,6 +1000,23 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         Notify($"{lines.Length} test sitesi kaydedildi.", ToastKind.Good);
     }
 
+    private void ClearLog_Click(object sender, RoutedEventArgs e)
+    {
+        if (!Confirm("Tüm kayıtlar silinecek. Devam edilsin mi?"))
+            return;
+        try
+        {
+            Log.Clear();
+            LogBox.Clear();
+            Log.Info("Kayıtlar temizlendi.");
+            Notify("Kayıtlar temizlendi.", ToastKind.Good);
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show(this, $"Kayıtlar silinemedi: {ex.Message}", AppTitle, MessageBoxButton.OK, MessageBoxImage.Error);
+        }
+    }
+
     private void OpenLog_Click(object sender, RoutedEventArgs e)
     {
         if (System.IO.File.Exists(Log.FilePath))
@@ -1090,6 +1119,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         IsClosed = true;
         _timer.Stop();
         _toastTimer.Stop();
+        _pruneTimer?.Stop();
         _vpn.Dispose();
         _live.Dispose();
         _testCts?.Cancel();

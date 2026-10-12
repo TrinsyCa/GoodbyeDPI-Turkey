@@ -42,6 +42,9 @@ public sealed class AppSettings
         "https://www.wattpad.com/",
     ];
 
+    /// <summary>Bu kadar günden eski log satırları otomatik silinir.</summary>
+    public int LogRetentionDays { get; set; } = 7;
+
     /// <summary>İlk açılıştaki kurulum/test ekranı gösterildi mi?</summary>
     public bool FirstRunCompleted { get; set; }
 
