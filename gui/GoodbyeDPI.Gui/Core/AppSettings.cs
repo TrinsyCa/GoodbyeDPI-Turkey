@@ -42,6 +42,12 @@ public sealed class AppSettings
         "https://www.wattpad.com/",
     ];
 
+    /// <summary>Son test sonuçları (anahtar: yöntem argümanları). Uygulama yeniden açılınca test baştan yapılmasın.</summary>
+    public Dictionary<string, PresetTestResult> LastResults { get; set; } = [];
+
+    /// <summary>Son testin yapıldığı siteler; siteler değişince eski sonuçlar geçersiz sayılır.</summary>
+    public List<string> LastResultUrls { get; set; } = [];
+
     public static AppSettings Load()
     {
         try

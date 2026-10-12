@@ -6,6 +6,7 @@ using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Security.Authentication;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace GoodbyeDPI.Gui.Core;
 
@@ -13,10 +14,10 @@ public sealed record SiteResult(string Url, bool Ok, int? Milliseconds, string? 
 
 public sealed record PresetTestResult(IReadOnlyList<SiteResult> Sites, string? StartError = null)
 {
-    public int Passed => Sites.Count(s => s.Ok);
-    public bool AllPassed => StartError is null && Sites.Count > 0 && Passed == Sites.Count;
-    public bool NonePassed => Passed == 0;
-    public double? AverageMs => Sites.Any(s => s.Ok) ? Sites.Where(s => s.Ok).Average(s => s.Milliseconds!.Value) : null;
+    [JsonIgnore] public int Passed => Sites.Count(s => s.Ok);
+    [JsonIgnore] public bool AllPassed => StartError is null && Sites.Count > 0 && Passed == Sites.Count;
+    [JsonIgnore] public bool NonePassed => Passed == 0;
+    [JsonIgnore] public double? AverageMs => Sites.Any(s => s.Ok) ? Sites.Where(s => s.Ok).Average(s => s.Milliseconds!.Value) : null;
 }
 
 /// <summary>

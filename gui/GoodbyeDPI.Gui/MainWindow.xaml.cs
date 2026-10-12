@@ -33,6 +33,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     private bool _trayHintShown;
     private string? _visualKey;
     private bool? _vpnVisual;
+    private DateTime? _stoppedByUsAt;
 
     /// <summary>Test ya da servis işlemi sürerken satır butonları kapalı.</summary>
     public bool CanAct => !_busy;
@@ -176,11 +177,21 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         _rows = new ObservableCollection<PresetRow>(PresetLoader.Load(_folder).Select(p => new PresetRow(p)));
         PresetList.ItemsSource = _rows;
+
+        // Aynı sitelerle yapılmış son testin sonuçlarını geri yükle
+        if (_settings.LastResultUrls.SequenceEqual(_settings.TestUrls))
+        {
+            foreach (var row in _rows)
+                if (_settings.LastResults.TryGetValue(row.Preset.Arguments, out var result))
+                    row.Result = result;
+            UpdateRecommendation(notify: false);
+        }
     }
 
     private void Refresh()
     {
         _state = DpiService.GetState();
+        DetectExternalRestart();
         var (_, args) = DpiService.ReadInstalledCommand();
         var active = _state == DpiServiceState.NotInstalled ? null : PresetLoader.Match(_rows.Select(r => r.Preset), args);
         foreach (var row in _rows)
@@ -247,6 +258,22 @@ public partial class MainWindow : Window, INotifyPropertyChanged
 
         if (++_tick % 5 == 0 && !_busy)
             _ = CheckBannersAsync(includeLegacyTask: false);
+    }
+
+    private void DetectExternalRestart()
+    {
+        if (_busy || _testCts is not null || _state is not (DpiServiceState.Running or DpiServiceState.Starting))
+            return;
+
+        var stoppedRecently = _stoppedByUsAt is { } t && DateTime.UtcNow - t < TimeSpan.FromSeconds(30);
+        var pausedForVpn = _settings.PausedByVpn && _vpn.IsVpnActive;
+        if (stoppedRecently || pausedForVpn)
+        {
+            _stoppedByUsAt = null;
+            if (pausedForVpn)
+                _settings.PausedByVpn = false; // Duraklatma bozuldu; VPN kapanınca "geri açma" yapılmasın
+            OnExternalRestart();
+        }
     }
 
     /// <summary>
@@ -317,11 +344,32 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         var (manual, legacy) = await Task.Run(() =>
             (DpiService.FindManualProcesses().Count > 0,
-             includeLegacyTask ? ScheduledTasks.Exists(ScheduledTasks.LegacyVpnSwitchTask) : (bool?)null));
+             includeLegacyTask ? ConflictDetector.FindLegacyVpnSwitch() : null));
         SetBanner(ManualBanner, manual);
-        if (legacy is { } l)
-            SetBanner(LegacyBanner, l);
+        if (legacy is not null)
+        {
+            SetBanner(LegacyBanner, legacy.Found);
+            if (legacy.Found)
+            {
+                SetBanner(ExternalBanner, false); // Sebep belli, genel uyarıya gerek yok
+                Log.Warn($"Eski VPN script'i bulundu: {legacy.TaskPaths.Count} görev, {legacy.ProcessIds.Count} işlem.");
+            }
+        }
     }
+
+    /// <summary>
+    /// Kullanıcı kapattıktan (ya da VPN yüzünden duraklattıktan) sonra servis yeniden açıldıysa,
+    /// bunu başka bir şey yapmıştır. Sessizce "Koruma açık" göstermek yerine kullanıcıyı uyar.
+    /// </summary>
+    private void OnExternalRestart()
+    {
+        Log.Warn("GoodbyeDPI servisi bu uygulamanın dışında yeniden başlatıldı.");
+        Notify("Başka bir program GoodbyeDPI'ı geri açtı. Kontrol Paneli'ndeki uyarıya bakın.", ToastKind.Warn);
+        SetBanner(ExternalBanner, true);
+        _ = CheckBannersAsync(includeLegacyTask: true);
+    }
+
+    private void DismissExternal_Click(object sender, RoutedEventArgs e) => SetBanner(ExternalBanner, false);
 
     private void SetBanner(FrameworkElement banner, bool visible)
     {
@@ -414,6 +462,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     /// <summary>Servis işlemleri birkaç saniye sürebilir; arayüzü kilitlememek için arka planda.</summary>
     private async Task<bool> RunServiceOpAsync(Action operation)
     {
+        _stoppedByUsAt = null; // Bizim yaptığımız açma/kurma dış müdahale sayılmasın; durdurma sonrası yeniden ayarlanır
         SetBusy(true);
         try
         {
@@ -445,6 +494,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             case DpiServiceState.Running:
                 if (await RunServiceOpAsync(DpiService.Stop))
                 {
+                    _stoppedByUsAt = DateTime.UtcNow;
                     SetPausedByVpn(false);
                     Notify("GoodbyeDPI kapatıldı.", ToastKind.Info);
                 }
@@ -527,8 +577,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
     {
         try
         {
-            await Task.Run(() => ScheduledTasks.Delete(ScheduledTasks.LegacyVpnSwitchTask));
-            Notify("Eski VPN görevi kaldırıldı.", ToastKind.Good);
+            await Task.Run(() => ConflictDetector.RemoveLegacyVpnSwitch(ConflictDetector.FindLegacyVpnSwitch()));
+            Notify("Eski VPN script'i kaldırıldı. Artık kapattığınızda kapalı kalır.", ToastKind.Good);
         }
         catch (Exception ex)
         {
@@ -591,12 +641,26 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         ShowTestProgress(true);
         SetProgress(0, steps, "GoodbyeDPI olmadan erişim kontrol ediliyor…");
 
+        var externalRestarts = 0;
+        // Servis test sırasında dışarıdan açılırsa (ör. eski VPN script'i) iki goodbyedpi aynı anda
+        // çalışır ve sonuçlar o yöntemi değil servisi ölçer. Her adımda kontrol edip yeniden durdur.
+        async Task EnsureServiceStoppedAsync()
+        {
+            if (await Task.Run(DpiService.GetState, ct) is DpiServiceState.Running or DpiServiceState.Starting)
+            {
+                externalRestarts++;
+                Log.Warn("Test sırasında GoodbyeDPI servisi dışarıdan başlatıldı, tekrar durduruluyor.");
+                await Task.Run(DpiService.Stop, ct);
+            }
+        }
+
         try
         {
             if (wasRunning)
                 await Task.Run(DpiService.Stop, ct);
 
             var baseline = await TestRunner.RunBaselineAsync(urls, ct);
+            await EnsureServiceStoppedAsync();
             var blocked = baseline.Sites.Count(s => !s.Ok);
             ShowBaseline(blocked, baseline.Sites.Count);
             Log.Info($"Engelsiz kontrol: {blocked}/{baseline.Sites.Count} site engelli.");
@@ -606,17 +670,21 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 ct.ThrowIfCancellationRequested();
                 var row = rows[i];
                 SetProgress(i + 1, steps, $"{row.Name} deneniyor…");
+                await EnsureServiceStoppedAsync();
                 row.IsTesting = true;
                 try
                 {
                     row.Result = await TestRunner.RunPresetAsync(folder, row.Preset, urls, ct);
-                    Log.Info($"Test: {row.Name} -> {row.StatusText}");
                 }
                 finally
                 {
                     row.IsTesting = false;
                 }
+                Log.Info($"Test: {row.Name} -> {row.StatusText}");
+                _settings.LastResults[row.Preset.Arguments] = row.Result;
             }
+            await EnsureServiceStoppedAsync();
+            _settings.LastResultUrls = [.. urls];
             SetProgress(steps, steps, "Test tamamlandı");
         }
         catch (OperationCanceledException)
@@ -641,13 +709,23 @@ public partial class MainWindow : Window, INotifyPropertyChanged
                 _settings.Save();
             }
 
+            _settings.Save();
             _testCts.Dispose();
             _testCts = null;
             TestAllButton.IsEnabled = true;
             CancelTestButton.Visibility = Visibility.Collapsed;
-            UpdateRecommendation();
+            UpdateRecommendation(notify: externalRestarts == 0);
             SetBusy(false);
             _ = HideTestProgressLaterAsync();
+
+            if (externalRestarts > 0)
+            {
+                BaselineIcon.Text = "";
+                BaselineIcon.Foreground = (Brush)FindResource("Warn");
+                BaselineText.Text = $"Test sırasında GoodbyeDPI servisi {externalRestarts} kez dışarıdan yeniden başlatıldı; " +
+                                    "sonuçlar güvenilir olmayabilir. Kontrol Paneli'ndeki uyarıyı giderip testi tekrarlayın.";
+                OnExternalRestart();
+            }
         }
     }
 
@@ -698,7 +776,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         Animate(ProgressScale, ScaleTransform.ScaleXProperty, total == 0 ? 0 : (double)done / total, 500, Ease());
     }
 
-    private void UpdateRecommendation()
+    private void UpdateRecommendation(bool notify = true)
     {
         var recommended = PresetRanker.PickRecommended(_rows.Select(r => (r.Preset, r.Result)).ToList());
         foreach (var row in _rows)
@@ -707,7 +785,7 @@ public partial class MainWindow : Window, INotifyPropertyChanged
         var tested = _rows.Count(r => r.Result is not null);
         if (tested > 0)
             StatTest.Text = $"{_rows.Count(r => r.Kind == CompatKind.Full)}/{tested} tam uyumlu";
-        if (recommended is not null)
+        if (recommended is not null && notify)
             Notify($"Test bitti. Bu cihaz için önerilen yöntem: {recommended.Name}", ToastKind.Good);
     }
 
@@ -763,6 +841,8 @@ public partial class MainWindow : Window, INotifyPropertyChanged
             return;
         }
         _settings.TestUrls = lines.ToList();
+        _settings.LastResults.Clear();
+        _settings.LastResultUrls.Clear();
         _settings.Save();
         foreach (var row in _rows)
             row.Result = null; // Eski sonuçlar başka sitelerle alındı

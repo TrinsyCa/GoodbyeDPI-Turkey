@@ -195,10 +195,18 @@
                                 </Border>
                                 <Border x:Name="LegacyBanner" Style="{StaticResource GlassCard}" BorderBrush="#66FBBF24" Margin="0,0,0,12" Padding="16,12" Visibility="Collapsed">
                                     <DockPanel>
-                                        <Button DockPanel.Dock="Right" Content="Eski görevi kaldır" Click="RemoveLegacyTask_Click" VerticalAlignment="Center" />
+                                        <Button DockPanel.Dock="Right" Content="Eski script'i kaldır" Click="RemoveLegacyTask_Click" VerticalAlignment="Center" />
                                         <TextBlock Text="&#xE7BA;" Style="{StaticResource Icon}" Foreground="{StaticResource Warn}" Margin="0,0,12,0" />
                                         <TextBlock TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0"
-                                                   Text="Daha önce kurulan 'VPN-GoodbyeDPI-Switch' görevi çalışıyor. Bu uygulamanın VPN ayarıyla çakışır: siz kapatsanız bile servisi geri açar." />
+                                                   Text="Daha önce elle kurulan vpn-goodbyedpi-switch.ps1 script'i çalışıyor. Siz GoodbyeDPI'ı kapatsanız bile birkaç saniye içinde geri açar ve testleri bozar. Görevi uygulama üstlendiği için kaldırılmalı." />
+                                    </DockPanel>
+                                </Border>
+                                <Border x:Name="ExternalBanner" Style="{StaticResource GlassCard}" BorderBrush="#66FBBF24" Margin="0,0,0,12" Padding="16,12" Visibility="Collapsed">
+                                    <DockPanel>
+                                        <Button DockPanel.Dock="Right" Content="Tamam" Click="DismissExternal_Click" VerticalAlignment="Center" />
+                                        <TextBlock Text="&#xE7BA;" Style="{StaticResource Icon}" Foreground="{StaticResource Warn}" Margin="0,0,12,0" />
+                                        <TextBlock TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,12,0"
+                                                   Text="GoodbyeDPI servisi bu uygulamanın dışında yeniden başlatıldı. Servisi yöneten başka bir program, script ya da eski bir kurulum çalışıyor olabilir; o çalıştıkça kapatma kalıcı olmaz." />
                                     </DockPanel>
                                 </Border>
                                 <Border x:Name="ManualBanner" Style="{StaticResource GlassCard}" BorderBrush="#66FBBF24" Margin="0,0,0,12" Padding="16,12" Visibility="Collapsed">
